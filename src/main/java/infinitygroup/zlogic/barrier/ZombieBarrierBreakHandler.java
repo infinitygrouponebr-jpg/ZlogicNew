@@ -50,7 +50,16 @@ public final class ZombieBarrierBreakHandler {
 
         ZombieBarrierBreakHelper.BarrierBreakAssessment assessment = ZombieBarrierBreakHelper.inspect(level, zombie);
         ZombieBarrierBreakHelper.recordState(zombie, assessment, gameTime);
+        ZombieBarrierBreakHelper.updateBarrierFocus(zombie, assessment, gameTime);
         if (!assessment.active()) {
+            if (Config.barrierBreakNavigateToBarrier && assessment.supported() && assessment.normalizedPos() != null && assessment.hasTarget()) {
+                zombie.getNavigation().moveTo(
+                    assessment.normalizedPos().getX() + 0.5D,
+                    assessment.normalizedPos().getY(),
+                    assessment.normalizedPos().getZ() + 0.5D,
+                    1.0D
+                );
+            }
             ZombieBarrierBreakHelper.scheduleNextTick(zombie, gameTime, false);
             if (Config.barrierBreakVerboseDebug || Config.barrierBreakDebugLogs || Config.debugLogs) {
                 debug(

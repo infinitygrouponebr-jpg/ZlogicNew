@@ -660,6 +660,132 @@ public class Config {
         .comment("Allowed dimensions for daytime zombie spawns.")
         .defineListAllowEmpty("daySpawnAllowedDimensions", List.of("minecraft:overworld"), Config::validateResourceLocation);
 
+    private static final ModConfigSpec.BooleanValue ENABLE_TANK_ZOMBIE_VARIANT = BUILDER
+        .comment("Enable the heavy tank-zombie variant.")
+        .define("enableTankZombieVariant", true);
+
+    private static final ModConfigSpec.DoubleValue TANK_ZOMBIE_SPAWN_CHANCE = BUILDER
+        .comment("Chance for a newly spawned zombie-family mob to become a tank zombie.")
+        .defineInRange("tankZombieSpawnChance", 0.08D, 0.0D, 1.0D);
+
+    private static final ModConfigSpec.DoubleValue TANK_ZOMBIE_SCALE_MULTIPLIER = BUILDER
+        .comment("Visual and collision scale multiplier applied to tank zombies.")
+        .defineInRange("tankZombieScaleMultiplier", 2.0D, 0.0625D, 16.0D);
+
+    private static final ModConfigSpec.DoubleValue TANK_ZOMBIE_HEALTH_MULTIPLIER = BUILDER
+        .comment("Maximum health multiplier applied to tank zombies.")
+        .defineInRange("tankZombieHealthMultiplier", 3.5D, 1.0D, 16.0D);
+
+    private static final ModConfigSpec.DoubleValue TANK_ZOMBIE_ATTACK_DAMAGE_BONUS = BUILDER
+        .comment("Flat attack damage bonus applied to tank zombies.")
+        .defineInRange("tankZombieAttackDamageBonus", 6.0D, 0.0D, 256.0D);
+
+    private static final ModConfigSpec.DoubleValue TANK_ZOMBIE_MOVEMENT_SPEED_MULTIPLIER = BUILDER
+        .comment("Movement speed multiplier applied to tank zombies. Values below 1.0 make them slower.")
+        .defineInRange("tankZombieMovementSpeedMultiplier", 0.72D, 0.05D, 4.0D);
+
+    private static final ModConfigSpec.DoubleValue TANK_ZOMBIE_KNOCKBACK_RESISTANCE_BONUS = BUILDER
+        .comment("Extra knockback resistance applied to tank zombies.")
+        .defineInRange("tankZombieKnockbackResistanceBonus", 0.35D, 0.0D, 1.0D);
+
+    private static final ModConfigSpec.BooleanValue TANK_ZOMBIE_BLOCK_BREAK_ENABLED = BUILDER
+        .comment("When true, tank zombies can break solid blocks to reach a player target.")
+        .define("tankZombieBlockBreakEnabled", true);
+
+    private static final ModConfigSpec.IntValue TANK_ZOMBIE_BLOCK_BREAK_CHECK_INTERVAL_TICKS = BUILDER
+        .comment("How often tank zombies check whether they should break a block.")
+        .defineInRange("tankZombieBlockBreakCheckIntervalTicks", 20, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.IntValue TANK_ZOMBIE_BLOCK_BREAK_ZOMBIE_COOLDOWN_TICKS = BUILDER
+        .comment("Cooldown after a tank zombie attempts a block break hit.")
+        .defineInRange("tankZombieBlockBreakZombieCooldownTicks", 30, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.IntValue TANK_ZOMBIE_BLOCK_BREAK_BLOCK_COOLDOWN_TICKS = BUILDER
+        .comment("Cooldown shared by a damaged block before another tank hit can progress it.")
+        .defineInRange("tankZombieBlockBreakBlockCooldownTicks", 12, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.DoubleValue TANK_ZOMBIE_BLOCK_BREAK_MAX_TARGET_DISTANCE = BUILDER
+        .comment("Maximum distance to the player target before tank block breaking is disabled.")
+        .defineInRange("tankZombieBlockBreakMaxTargetDistance", 12.0D, 1.0D, 128.0D);
+
+    private static final ModConfigSpec.DoubleValue TANK_ZOMBIE_BLOCK_BREAK_MAX_BLOCK_DISTANCE = BUILDER
+        .comment("Maximum distance in front of the tank zombie used to find a breakable obstacle.")
+        .defineInRange("tankZombieBlockBreakMaxBlockDistance", 2.2D, 0.5D, 8.0D);
+
+    private static final ModConfigSpec.IntValue TANK_ZOMBIE_BLOCK_BREAK_DAMAGE_PER_HIT = BUILDER
+        .comment("Damage dealt to a block each time a tank zombie lands a break hit.")
+        .defineInRange("tankZombieBlockBreakDamagePerHit", 1, 1, 64);
+
+    private static final ModConfigSpec.IntValue TANK_ZOMBIE_BLOCK_BREAK_BASE_DURABILITY = BUILDER
+        .comment("Base durability used by tank-zombie block breaking before hardness and resistance are added.")
+        .defineInRange("tankZombieBlockBreakBaseDurability", 2, 1, 512);
+
+    private static final ModConfigSpec.DoubleValue TANK_ZOMBIE_BLOCK_BREAK_DURABILITY_PER_HARDNESS = BUILDER
+        .comment("Extra durability added per point of block hardness for tank-zombie block breaking.")
+        .defineInRange("tankZombieBlockBreakDurabilityPerHardness", 2.0D, 0.0D, 128.0D);
+
+    private static final ModConfigSpec.DoubleValue TANK_ZOMBIE_BLOCK_BREAK_DURABILITY_PER_RESISTANCE = BUILDER
+        .comment("Extra durability added per point of explosion resistance for tank-zombie block breaking.")
+        .defineInRange("tankZombieBlockBreakDurabilityPerResistance", 0.25D, 0.0D, 128.0D);
+
+    private static final ModConfigSpec.IntValue TANK_ZOMBIE_BLOCK_BREAK_MAX_DURABILITY = BUILDER
+        .comment("Maximum durability cap used by tank-zombie block breaking.")
+        .defineInRange("tankZombieBlockBreakMaxDurability", 80, 1, 4096);
+
+    private static final ModConfigSpec.IntValue TANK_ZOMBIE_BLOCK_BREAK_DAMAGE_MEMORY_TICKS = BUILDER
+        .comment("How long partial tank-zombie block break damage is remembered.")
+        .defineInRange("tankZombieBlockBreakDamageMemoryTicks", 200, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.IntValue TANK_ZOMBIE_BLOCK_FOCUS_TICKS = BUILDER
+        .comment("How long a tank zombie keeps focusing the same breach block before re-evaluating.")
+        .defineInRange("tankZombieBlockFocusTicks", 120, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.DoubleValue TANK_ZOMBIE_BLOCK_FOCUS_TARGET_DRIFT = BUILDER
+        .comment("How far the player target may drift from the focused breach block before the tank zombie gives up that focus.")
+        .defineInRange("tankZombieBlockFocusTargetDrift", 6.0D, 0.5D, 64.0D);
+
+    private static final ModConfigSpec.BooleanValue TANK_ZOMBIE_NAVIGATE_TO_FOCUSED_BLOCK = BUILDER
+        .comment("When true, tank zombies explicitly path toward the currently focused breach block.")
+        .define("tankZombieNavigateToFocusedBlock", true);
+
+    private static final ModConfigSpec.BooleanValue TANK_ZOMBIE_BLOCK_BREAK_DROP_BLOCKS = BUILDER
+        .comment("When true, blocks broken by tank zombies drop their normal loot.")
+        .define("tankZombieBlockBreakDropBlocks", false);
+
+    private static final ModConfigSpec.BooleanValue TANK_ZOMBIE_BLOCK_BREAK_RESPECT_DENYLIST = BUILDER
+        .comment("When true, the tank-zombie block break denylist is always respected.")
+        .define("tankZombieBlockBreakRespectDenylist", true);
+
+    private static final ModConfigSpec.ConfigValue<List<? extends String>> TANK_ZOMBIE_BLOCK_BREAK_DENYLIST = BUILDER
+        .comment("Blocks that tank zombies must never break.")
+        .defineListAllowEmpty(
+            "tankZombieBlockBreakDenylist",
+            List.of(
+                "minecraft:bedrock",
+                "minecraft:barrier",
+                "minecraft:end_portal_frame",
+                "minecraft:command_block",
+                "minecraft:chain_command_block",
+                "minecraft:repeating_command_block",
+                "minecraft:structure_block",
+                "minecraft:jigsaw",
+                "minecraft:reinforced_deepslate",
+                "minecraft:obsidian",
+                "minecraft:crying_obsidian",
+                "minecraft:respawn_anchor",
+                "minecraft:ender_chest"
+            ),
+            Config::validateResourceLocation
+        );
+
+    private static final ModConfigSpec.BooleanValue TANK_ZOMBIE_DEBUG_LOGS = BUILDER
+        .comment("Enable debug logging for the tank-zombie system.")
+        .define("tankZombieDebugLogs", false);
+
+    private static final ModConfigSpec.BooleanValue DISABLE_BABY_ZOMBIES = BUILDER
+        .comment("When true, zombie-family mobs are forced to spawn as adults.")
+        .define("disableBabyZombies", true);
+
     private static final ModConfigSpec.BooleanValue ENABLE_ZOMBIE_AGGRESSION_SYSTEM = BUILDER
         .comment("Enable or disable the zombie aggression system.")
         .define("enableZombieAggressionSystem", true);
@@ -707,6 +833,34 @@ public class Config {
     private static final ModConfigSpec.BooleanValue ZOMBIE_PREFER_NEAREST_PLAYER = BUILDER
         .comment("When true, zombies prefer the nearest valid player; otherwise they can pick randomly.")
         .define("zombiePreferNearestPlayer", true);
+
+    private static final ModConfigSpec.BooleanValue ENABLE_ZOMBIE_PASSIVE_HUNT = BUILDER
+        .comment("Enable or disable the passive mob hunt system for zombies.")
+        .define("enableZombiePassiveHunt", true);
+
+    private static final ModConfigSpec.DoubleValue ZOMBIE_PASSIVE_HUNT_CHANCE = BUILDER
+        .comment("Chance for a zombie to pick a passive mob target when no higher-priority target is active.")
+        .defineInRange("zombiePassiveHuntChance", 0.20D, 0.0D, 1.0D);
+
+    private static final ModConfigSpec.DoubleValue ZOMBIE_PASSIVE_HUNT_RANGE = BUILDER
+        .comment("Search range used when zombies look for passive mobs to hunt.")
+        .defineInRange("zombiePassiveHuntRange", 16.0D, 1.0D, 256.0D);
+
+    private static final ModConfigSpec.IntValue ZOMBIE_PASSIVE_HUNT_CHECK_INTERVAL_TICKS = BUILDER
+        .comment("How often zombies evaluate passive mob hunt conditions.")
+        .defineInRange("zombiePassiveHuntCheckIntervalTicks", 60, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.IntValue ZOMBIE_PASSIVE_HUNT_EAT_DURATION_TICKS = BUILDER
+        .comment("Duration of the zombie meat-eating sequence after killing a passive mob.")
+        .defineInRange("zombiePassiveHuntEatDurationTicks", 32, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.DoubleValue ZOMBIE_PASSIVE_HUNT_HEAL_AMOUNT = BUILDER
+        .comment("Health restored when a zombie finishes eating meat from a passive mob kill.")
+        .defineInRange("zombiePassiveHuntHealAmount", 2.0D, 0.0D, 40.0D);
+
+    private static final ModConfigSpec.BooleanValue ZOMBIE_PASSIVE_HUNT_DEBUG_LOGS = BUILDER
+        .comment("Enable debug logging for passive mob hunting and meat eating.")
+        .define("zombiePassiveHuntDebugLogs", false);
 
     private static final ModConfigSpec.BooleanValue ZLOGIC_SYSTEMS_AFFECT_ONLY_ZLOGIC_ZOMBIES = BUILDER
         .comment("When true, Zlogic systems only affect zombies marked as spawned by Zlogic.")
@@ -1088,6 +1242,18 @@ public class Config {
         .comment("How long accumulated barrier damage is remembered if the barrier is not hit again.")
         .defineInRange("barrierBreakDamageMemoryTicks", 200, 1, Integer.MAX_VALUE);
 
+    private static final ModConfigSpec.IntValue BARRIER_BREAK_FOCUS_TICKS = BUILDER
+        .comment("How long zombies keep focusing the same barrier before re-evaluating another breach point.")
+        .defineInRange("barrierBreakFocusTicks", 120, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.DoubleValue BARRIER_BREAK_FOCUS_TARGET_DRIFT = BUILDER
+        .comment("How far the target may drift from the focused barrier before zombies drop that barrier focus.")
+        .defineInRange("barrierBreakFocusTargetDrift", 6.0D, 0.5D, 64.0D);
+
+    private static final ModConfigSpec.BooleanValue BARRIER_BREAK_NAVIGATE_TO_BARRIER = BUILDER
+        .comment("When true, zombies explicitly path toward a detected barrier instead of only circling the target.")
+        .define("barrierBreakNavigateToBarrier", true);
+
     private static final ModConfigSpec.BooleanValue BARRIER_BREAK_ACTUALLY_BREAK_BLOCKS = BUILDER
         .comment("When true, the barrier block is removed when durability reaches zero.")
         .define("barrierBreakActuallyBreakBlocks", true);
@@ -1114,7 +1280,7 @@ public class Config {
 
     private static final ModConfigSpec.BooleanValue DISABLE_VANILLA_MONSTER_SPAWNS = BUILDER
         .comment("When true, vanilla monster spawning can be blocked by type-specific flags.")
-        .define("disableVanillaMonsterSpawns", false);
+        .define("disableVanillaMonsterSpawns", true);
 
     private static final ModConfigSpec.BooleanValue DISABLE_VANILLA_MONSTER_SPAWNS_ONLY_IN_OVERWORLD = BUILDER
         .comment("When true, vanilla monster spawning is only blocked in the Overworld.")
@@ -1344,6 +1510,33 @@ public class Config {
     public static boolean daySpawnRespectDoMobSpawning;
     public static int daySpawnMaxLightLevel;
     public static List<? extends String> daySpawnAllowedDimensions;
+    public static boolean enableTankZombieVariant;
+    public static double tankZombieSpawnChance;
+    public static double tankZombieScaleMultiplier;
+    public static double tankZombieHealthMultiplier;
+    public static double tankZombieAttackDamageBonus;
+    public static double tankZombieMovementSpeedMultiplier;
+    public static double tankZombieKnockbackResistanceBonus;
+    public static boolean tankZombieBlockBreakEnabled;
+    public static int tankZombieBlockBreakCheckIntervalTicks;
+    public static int tankZombieBlockBreakZombieCooldownTicks;
+    public static int tankZombieBlockBreakBlockCooldownTicks;
+    public static double tankZombieBlockBreakMaxTargetDistance;
+    public static double tankZombieBlockBreakMaxBlockDistance;
+    public static int tankZombieBlockBreakDamagePerHit;
+    public static int tankZombieBlockBreakBaseDurability;
+    public static double tankZombieBlockBreakDurabilityPerHardness;
+    public static double tankZombieBlockBreakDurabilityPerResistance;
+    public static int tankZombieBlockBreakMaxDurability;
+    public static int tankZombieBlockBreakDamageMemoryTicks;
+    public static int tankZombieBlockFocusTicks;
+    public static double tankZombieBlockFocusTargetDrift;
+    public static boolean tankZombieNavigateToFocusedBlock;
+    public static boolean tankZombieBlockBreakDropBlocks;
+    public static boolean tankZombieBlockBreakRespectDenylist;
+    public static List<? extends String> tankZombieBlockBreakDenylist;
+    public static boolean tankZombieDebugLogs;
+    public static boolean disableBabyZombies;
     public static boolean enableZombieAggressionSystem;
     public static boolean aggressionAffectsVanillaZombies;
     public static boolean aggressionAffectsDaySpawnedZombies;
@@ -1356,6 +1549,13 @@ public class Config {
     public static int zombieForgetTargetAfterTicks;
     public static double zombieRetargetChance;
     public static boolean zombiePreferNearestPlayer;
+    public static boolean enableZombiePassiveHunt;
+    public static double zombiePassiveHuntChance;
+    public static double zombiePassiveHuntRange;
+    public static int zombiePassiveHuntCheckIntervalTicks;
+    public static int zombiePassiveHuntEatDurationTicks;
+    public static double zombiePassiveHuntHealAmount;
+    public static boolean zombiePassiveHuntDebugLogs;
     public static boolean zlogicSystemsAffectOnlyZlogicZombies;
     public static boolean zlogicTreatLegacyDaySpawnedAsZlogic;
     public static boolean zlogicDebugZombieMarkers;
@@ -1451,6 +1651,9 @@ public class Config {
     public static int barrierBreakGlassPaneDurability;
     public static int barrierBreakExtraBlockDurability;
     public static int barrierBreakDamageMemoryTicks;
+    public static int barrierBreakFocusTicks;
+    public static double barrierBreakFocusTargetDrift;
+    public static boolean barrierBreakNavigateToBarrier;
     public static boolean barrierBreakActuallyBreakBlocks;
     public static boolean barrierBreakDropBlocks;
     public static boolean barrierBreakParticles;
@@ -1639,6 +1842,33 @@ public class Config {
         daySpawnRespectDoMobSpawning = DAY_SPAWN_RESPECT_DO_MOB_SPAWNING.get();
         daySpawnMaxLightLevel = DAY_SPAWN_MAX_LIGHT_LEVEL.get();
         daySpawnAllowedDimensions = DAY_SPAWN_ALLOWED_DIMENSIONS.get();
+        enableTankZombieVariant = ENABLE_TANK_ZOMBIE_VARIANT.get();
+        tankZombieSpawnChance = TANK_ZOMBIE_SPAWN_CHANCE.get();
+        tankZombieScaleMultiplier = TANK_ZOMBIE_SCALE_MULTIPLIER.get();
+        tankZombieHealthMultiplier = TANK_ZOMBIE_HEALTH_MULTIPLIER.get();
+        tankZombieAttackDamageBonus = TANK_ZOMBIE_ATTACK_DAMAGE_BONUS.get();
+        tankZombieMovementSpeedMultiplier = TANK_ZOMBIE_MOVEMENT_SPEED_MULTIPLIER.get();
+        tankZombieKnockbackResistanceBonus = TANK_ZOMBIE_KNOCKBACK_RESISTANCE_BONUS.get();
+        tankZombieBlockBreakEnabled = TANK_ZOMBIE_BLOCK_BREAK_ENABLED.get();
+        tankZombieBlockBreakCheckIntervalTicks = TANK_ZOMBIE_BLOCK_BREAK_CHECK_INTERVAL_TICKS.get();
+        tankZombieBlockBreakZombieCooldownTicks = TANK_ZOMBIE_BLOCK_BREAK_ZOMBIE_COOLDOWN_TICKS.get();
+        tankZombieBlockBreakBlockCooldownTicks = TANK_ZOMBIE_BLOCK_BREAK_BLOCK_COOLDOWN_TICKS.get();
+        tankZombieBlockBreakMaxTargetDistance = TANK_ZOMBIE_BLOCK_BREAK_MAX_TARGET_DISTANCE.get();
+        tankZombieBlockBreakMaxBlockDistance = TANK_ZOMBIE_BLOCK_BREAK_MAX_BLOCK_DISTANCE.get();
+        tankZombieBlockBreakDamagePerHit = TANK_ZOMBIE_BLOCK_BREAK_DAMAGE_PER_HIT.get();
+        tankZombieBlockBreakBaseDurability = TANK_ZOMBIE_BLOCK_BREAK_BASE_DURABILITY.get();
+        tankZombieBlockBreakDurabilityPerHardness = TANK_ZOMBIE_BLOCK_BREAK_DURABILITY_PER_HARDNESS.get();
+        tankZombieBlockBreakDurabilityPerResistance = TANK_ZOMBIE_BLOCK_BREAK_DURABILITY_PER_RESISTANCE.get();
+        tankZombieBlockBreakMaxDurability = TANK_ZOMBIE_BLOCK_BREAK_MAX_DURABILITY.get();
+        tankZombieBlockBreakDamageMemoryTicks = TANK_ZOMBIE_BLOCK_BREAK_DAMAGE_MEMORY_TICKS.get();
+        tankZombieBlockFocusTicks = TANK_ZOMBIE_BLOCK_FOCUS_TICKS.get();
+        tankZombieBlockFocusTargetDrift = TANK_ZOMBIE_BLOCK_FOCUS_TARGET_DRIFT.get();
+        tankZombieNavigateToFocusedBlock = TANK_ZOMBIE_NAVIGATE_TO_FOCUSED_BLOCK.get();
+        tankZombieBlockBreakDropBlocks = TANK_ZOMBIE_BLOCK_BREAK_DROP_BLOCKS.get();
+        tankZombieBlockBreakRespectDenylist = TANK_ZOMBIE_BLOCK_BREAK_RESPECT_DENYLIST.get();
+        tankZombieBlockBreakDenylist = TANK_ZOMBIE_BLOCK_BREAK_DENYLIST.get();
+        tankZombieDebugLogs = TANK_ZOMBIE_DEBUG_LOGS.get();
+        disableBabyZombies = DISABLE_BABY_ZOMBIES.get();
         enableZombieAggressionSystem = ENABLE_ZOMBIE_AGGRESSION_SYSTEM.get();
         aggressionAffectsVanillaZombies = AGGRESSION_AFFECTS_VANILLA_ZOMBIES.get();
         aggressionAffectsDaySpawnedZombies = AGGRESSION_AFFECTS_DAY_SPAWNED_ZOMBIES.get();
@@ -1651,6 +1881,13 @@ public class Config {
         zombieForgetTargetAfterTicks = ZOMBIE_FORGET_TARGET_AFTER_TICKS.get();
         zombieRetargetChance = ZOMBIE_RETARGET_CHANCE.get();
         zombiePreferNearestPlayer = ZOMBIE_PREFER_NEAREST_PLAYER.get();
+        enableZombiePassiveHunt = ENABLE_ZOMBIE_PASSIVE_HUNT.get();
+        zombiePassiveHuntChance = ZOMBIE_PASSIVE_HUNT_CHANCE.get();
+        zombiePassiveHuntRange = ZOMBIE_PASSIVE_HUNT_RANGE.get();
+        zombiePassiveHuntCheckIntervalTicks = ZOMBIE_PASSIVE_HUNT_CHECK_INTERVAL_TICKS.get();
+        zombiePassiveHuntEatDurationTicks = ZOMBIE_PASSIVE_HUNT_EAT_DURATION_TICKS.get();
+        zombiePassiveHuntHealAmount = ZOMBIE_PASSIVE_HUNT_HEAL_AMOUNT.get();
+        zombiePassiveHuntDebugLogs = ZOMBIE_PASSIVE_HUNT_DEBUG_LOGS.get();
         zlogicSystemsAffectOnlyZlogicZombies = ZLOGIC_SYSTEMS_AFFECT_ONLY_ZLOGIC_ZOMBIES.get();
         zlogicTreatLegacyDaySpawnedAsZlogic = ZLOGIC_TREAT_LEGACY_DAY_SPAWNED_AS_ZLOGIC.get();
         zlogicDebugZombieMarkers = ZLOGIC_DEBUG_ZOMBIE_MARKERS.get();
@@ -1746,6 +1983,9 @@ public class Config {
         barrierBreakGlassPaneDurability = BARRIER_BREAK_GLASS_PANE_DURABILITY.get();
         barrierBreakExtraBlockDurability = BARRIER_BREAK_EXTRA_BLOCK_DURABILITY.get();
         barrierBreakDamageMemoryTicks = BARRIER_BREAK_DAMAGE_MEMORY_TICKS.get();
+        barrierBreakFocusTicks = BARRIER_BREAK_FOCUS_TICKS.get();
+        barrierBreakFocusTargetDrift = BARRIER_BREAK_FOCUS_TARGET_DRIFT.get();
+        barrierBreakNavigateToBarrier = BARRIER_BREAK_NAVIGATE_TO_BARRIER.get();
         barrierBreakActuallyBreakBlocks = BARRIER_BREAK_ACTUALLY_BREAK_BLOCKS.get();
         barrierBreakDropBlocks = BARRIER_BREAK_DROP_BLOCKS.get();
         barrierBreakParticles = BARRIER_BREAK_PARTICLES.get();

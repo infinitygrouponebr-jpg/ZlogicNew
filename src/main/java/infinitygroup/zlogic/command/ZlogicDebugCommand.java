@@ -1,5 +1,6 @@
 package infinitygroup.zlogic.command;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import infinitygroup.zlogic.Config;
 import infinitygroup.zlogic.compat.OptionalModCompat;
 import infinitygroup.zlogic.compat.microtech.MicroTechCompat;
@@ -21,12 +22,16 @@ import infinitygroup.zlogic.zombie.NightZombieSpawnController;
 import infinitygroup.zlogic.zombie.ZombieNightBuffHandler;
 import infinitygroup.zlogic.zombie.ZombieSurvivalScalingHelper;
 import infinitygroup.zlogic.zombie.ZombieSurvivalScalingHandler;
+import infinitygroup.zlogic.zombie.ZombieTankHandler;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -95,8 +100,26 @@ public final class ZlogicDebugCommand {
                                 .requires(source -> source.hasPermission(2))
                                 .executes(context -> executeRescaleZombie(context.getSource()))
                         )
+                        .then(
+                            Commands.literal("spawn")
+                                .requires(source -> source.hasPermission(2))
+                                .then(createSpawnLiteral("vanilla", SpawnVariant.VANILLA))
+                                .then(createSpawnLiteral("zlogic", SpawnVariant.ZLOGIC))
+                                .then(createSpawnLiteral("day", SpawnVariant.DAY))
+                                .then(createSpawnLiteral("night", SpawnVariant.NIGHT))
+                                .then(createSpawnLiteral("tank", SpawnVariant.TANK))
+                        )
                 )
         );
+    }
+
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> createSpawnLiteral(String literal, SpawnVariant variant) {
+        return Commands.literal(literal)
+            .executes(context -> executeSpawnZombie(context.getSource(), variant, 1))
+            .then(
+                Commands.argument("count", IntegerArgumentType.integer(1, 32))
+                    .executes(context -> executeSpawnZombie(context.getSource(), variant, IntegerArgumentType.getInteger(context, "count")))
+            );
     }
 
     private static int executeMachineDebug(CommandSourceStack source) {
@@ -473,6 +496,42 @@ public final class ZlogicDebugCommand {
         return 1;
     }
 
+    private static int executeSpawnZombie(CommandSourceStack source, SpawnVariant variant, int count) {
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(Component.literal("This command can only be used by a player."));
+            return 0;
+        }
+
+        int safeCount = Mth.clamp(count, 1, 32);
+        int spawned = 0;
+        BlockPos anchor = player.blockPosition();
+        for (int i = 0; i < safeCount; i++) {
+            BlockPos spawnPos = resolveSpawnPos(player, i);
+            var zombie = EntityType.ZOMBIE.create(player.serverLevel());
+            if (zombie == null) {
+                continue;
+            }
+
+            applySpawnVariant(zombie, variant);
+            zombie.moveTo(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D, player.getRandom().nextFloat() * 360.0F, 0.0F);
+            zombie.finalizeSpawn(player.serverLevel(), player.serverLevel().getCurrentDifficultyAt(spawnPos), MobSpawnType.COMMAND, null);
+            applySpawnVariant(zombie, variant);
+            zombie.setTarget(player);
+
+            if (player.serverLevel().addFreshEntity(zombie)) {
+                spawned++;
+            }
+        }
+
+        int spawnedCount = spawned;
+        String variantName = variant.name().toLowerCase(Locale.ROOT);
+        source.sendSuccess(
+            () -> Component.literal("Spawned " + spawnedCount + " zombie(s) variant=" + variantName + " near " + anchor),
+            false
+        );
+        return spawned > 0 ? 1 : 0;
+    }
+
     private static int executeHordeClimbDebug(CommandSourceStack source) {
         if (!(source.getEntity() instanceof ServerPlayer player)) {
             source.sendFailure(Component.literal("This command can only be used by a player."));
@@ -738,6 +797,31 @@ public final class ZlogicDebugCommand {
         return String.format(Locale.ROOT, "%.2f", value);
     }
 
+    private static BlockPos resolveSpawnPos(ServerPlayer player, int index) {
+        BlockPos base = player.blockPosition().offset(2 + (index % 4), 0, 2 + (index / 4));
+        int topY = player.serverLevel().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, base.getX(), base.getZ());
+        int clampedY = Math.max(player.serverLevel().getMinBuildHeight() + 1, topY + 1);
+        return new BlockPos(base.getX(), clampedY, base.getZ());
+    }
+
+    private static void applySpawnVariant(net.minecraft.world.entity.monster.Zombie zombie, SpawnVariant variant) {
+        if (zombie == null || variant == null) {
+            return;
+        }
+
+        switch (variant) {
+            case VANILLA -> {
+            }
+            case ZLOGIC -> ZombieMarkingHelper.markZlogicSpawned(zombie);
+            case DAY -> ZombieMarkingHelper.markDaySpawned(zombie);
+            case NIGHT -> ZombieMarkingHelper.markNightSpawned(zombie);
+            case TANK -> {
+                ZombieMarkingHelper.markZlogicSpawned(zombie);
+                zombie.getPersistentData().putBoolean(ZombieTankHandler.TANK_ZOMBIE_KEY, true);
+            }
+        }
+    }
+
     private static ZombieTargetSearchResult findZombieTarget(ServerPlayer player, double reach, double fallbackRadius) {
         Vec3 eye = player.getEyePosition(1.0F);
         Vec3 look = player.getViewVector(1.0F);
@@ -796,6 +880,14 @@ public final class ZlogicDebugCommand {
     }
 
     private record ZombieTargetSearchResult(LivingEntity entity, boolean exactHit, int fallbackCount) {
+    }
+
+    private enum SpawnVariant {
+        VANILLA,
+        ZLOGIC,
+        DAY,
+        NIGHT,
+        TANK
     }
 
     private static String describeNoiseGap(

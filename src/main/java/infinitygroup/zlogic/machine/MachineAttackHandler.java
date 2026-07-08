@@ -19,7 +19,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.level.LevelEvent;
@@ -41,7 +43,7 @@ public final class MachineAttackHandler {
     private static final String TARGET_Z_KEY = "zlogic_machine_target_z";
     private static final String NEXT_NAV_TICK_KEY = "zlogic_next_machine_nav_tick";
     private static final String HAS_TARGET_KEY = "zlogic_has_machine_target";
-    private static final Map<Integer, List<BlockOffset>> DIRECT_SCAN_OFFSETS = new HashMap<>();
+    private static final Map<Integer, List<ChunkOffset>> DIRECT_SCAN_CHUNK_OFFSETS = new HashMap<>();
 
     private MachineAttackHandler() {
     }
@@ -356,43 +358,52 @@ public final class MachineAttackHandler {
     private static MachineAttackTarget findBestDirectTarget(ServerLevel level, Zombie zombie) {
         double radius = Math.max(0.1D, Config.directMachineAttractionRadius);
         int scanLimit = Math.max(1, Config.directMachineAttractionMaxScanBlocksPerZombie);
-        int intRadius = Math.max(1, (int) Math.ceil(radius));
-        List<BlockOffset> offsets = DIRECT_SCAN_OFFSETS.computeIfAbsent(intRadius, MachineAttackHandler::buildOffsets);
+        int chunkRadius = Math.max(0, (int) Math.ceil(radius / 16.0D));
+        List<ChunkOffset> chunkOffsets = DIRECT_SCAN_CHUNK_OFFSETS.computeIfAbsent(chunkRadius, MachineAttackHandler::buildChunkOffsets);
 
-        BlockPos origin = zombie.blockPosition();
+        ChunkPos originChunk = new ChunkPos(zombie.blockPosition());
         MachineAttackTarget best = null;
         double bestDistanceSq = Double.MAX_VALUE;
         int scanned = 0;
+        double radiusSq = radius * radius;
 
-        for (BlockOffset offset : offsets) {
+        for (ChunkOffset offset : chunkOffsets) {
             if (scanned >= scanLimit) {
                 break;
             }
 
-            BlockPos pos = origin.offset(offset.x(), offset.y(), offset.z());
-            if (!level.hasChunkAt(pos)) {
+            int chunkX = originChunk.x + offset.x();
+            int chunkZ = originChunk.z + offset.z();
+            LevelChunk chunk = level.getChunkSource().getChunkNow(chunkX, chunkZ);
+            if (chunk == null) {
                 continue;
             }
 
-            BlockEntity blockEntity = level.getBlockEntity(pos);
-            if (blockEntity == null || blockEntity.isRemoved()) {
-                continue;
-            }
+            for (BlockEntity blockEntity : chunk.getBlockEntities().values()) {
+                if (scanned >= scanLimit) {
+                    break;
+                }
 
-            scanned++;
-            MachineAttackAssessment assessment = inspectMachineAttack(level, pos);
-            if (!assessment.directMachineEligible() || !assessment.attackable()) {
-                continue;
-            }
+                if (blockEntity == null || blockEntity.isRemoved() || blockEntity.getLevel() != level) {
+                    continue;
+                }
 
-            double distanceSq = zombie.distanceToSqr(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
-            if (distanceSq > radius * radius) {
-                continue;
-            }
+                BlockPos pos = blockEntity.getBlockPos();
+                double distanceSq = zombie.distanceToSqr(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+                if (distanceSq > radiusSq) {
+                    continue;
+                }
 
-            if (distanceSq < bestDistanceSq) {
-                bestDistanceSq = distanceSq;
-                best = new MachineAttackTarget(pos.immutable(), assessment);
+                scanned++;
+                MachineAttackAssessment assessment = inspectMachineAttack(level, pos);
+                if (!assessment.directMachineEligible() || !assessment.attackable()) {
+                    continue;
+                }
+
+                if (distanceSq < bestDistanceSq) {
+                    bestDistanceSq = distanceSq;
+                    best = new MachineAttackTarget(pos.immutable(), assessment);
+                }
             }
         }
 
@@ -401,21 +412,15 @@ public final class MachineAttackHandler {
         return best;
     }
 
-    private static List<BlockOffset> buildOffsets(int radius) {
-        List<BlockOffset> offsets = new ArrayList<>();
+    private static List<ChunkOffset> buildChunkOffsets(int radius) {
+        List<ChunkOffset> offsets = new ArrayList<>((radius * 2 + 1) * (radius * 2 + 1));
         for (int dx = -radius; dx <= radius; dx++) {
-            for (int dy = -radius; dy <= radius; dy++) {
-                for (int dz = -radius; dz <= radius; dz++) {
-                    if ((double) dx * dx + (double) dy * dy + (double) dz * dz > (double) radius * radius) {
-                        continue;
-                    }
-
-                    offsets.add(new BlockOffset(dx, dy, dz));
-                }
+            for (int dz = -radius; dz <= radius; dz++) {
+                offsets.add(new ChunkOffset(dx, dz));
             }
         }
 
-        offsets.sort(Comparator.comparingDouble(BlockOffset::distanceSq));
+        offsets.sort(Comparator.comparingDouble(ChunkOffset::distanceSq));
         return offsets;
     }
 
@@ -745,9 +750,9 @@ public final class MachineAttackHandler {
     private record LegacyMachineSelection(BlockPos pos, MachineAttackAssessment assessment) {
     }
 
-    private record BlockOffset(int x, int y, int z) {
+    private record ChunkOffset(int x, int z) {
         private double distanceSq() {
-            return (double) x * x + (double) y * y + (double) z * z;
+            return (double) x * x + (double) z * z;
         }
     }
 }

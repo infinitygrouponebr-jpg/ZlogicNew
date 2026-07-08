@@ -27,6 +27,10 @@ import java.util.List;
 import java.util.Set;
 
 public final class ZombieBarrierBreakHelper {
+    private static final String FOCUS_X_KEY = "zlogic_barrier_break_focus_x";
+    private static final String FOCUS_Y_KEY = "zlogic_barrier_break_focus_y";
+    private static final String FOCUS_Z_KEY = "zlogic_barrier_break_focus_z";
+    private static final String FOCUS_UNTIL_TICK_KEY = "zlogic_barrier_break_focus_until_tick";
     private static final Set<String> STAINED_GLASS_IDS = Set.of(
         "minecraft:white_stained_glass",
         "minecraft:orange_stained_glass",
@@ -362,6 +366,24 @@ public final class ZombieBarrierBreakHelper {
         tag.putLong("zlogic_barrier_break_last_tick", gameTime);
     }
 
+    public static void updateBarrierFocus(Zombie zombie, BarrierBreakAssessment assessment, long gameTime) {
+        if (zombie == null || assessment == null) {
+            return;
+        }
+
+        if (assessment.supported() && assessment.normalizedPos() != null) {
+            zombie.getPersistentData().putInt(FOCUS_X_KEY, assessment.normalizedPos().getX());
+            zombie.getPersistentData().putInt(FOCUS_Y_KEY, assessment.normalizedPos().getY());
+            zombie.getPersistentData().putInt(FOCUS_Z_KEY, assessment.normalizedPos().getZ());
+            zombie.getPersistentData().putLong(FOCUS_UNTIL_TICK_KEY, gameTime + Math.max(1, Config.barrierBreakFocusTicks));
+            return;
+        }
+
+        if (gameTime >= zombie.getPersistentData().getLong(FOCUS_UNTIL_TICK_KEY)) {
+            clearBarrierFocus(zombie);
+        }
+    }
+
     public static void scheduleNextTick(Zombie zombie, long gameTime, boolean attempted) {
         if (zombie == null) {
             return;
@@ -513,6 +535,11 @@ public final class ZombieBarrierBreakHelper {
             return BarrierBlockInspection.empty();
         }
 
+        BarrierBlockInspection focusedBarrier = getFocusedBarrier(level, zombie, targetContext);
+        if (focusedBarrier != null) {
+            return focusedBarrier;
+        }
+
         if (direction.lengthSqr() <= 0.0001D) {
             return BarrierBlockInspection.empty();
         }
@@ -538,6 +565,70 @@ public final class ZombieBarrierBreakHelper {
         }
 
         return BarrierBlockInspection.empty();
+    }
+
+    private static BarrierBlockInspection getFocusedBarrier(ServerLevel level, Zombie zombie, TargetContext targetContext) {
+        if (level == null || zombie == null || targetContext == null) {
+            return null;
+        }
+
+        long untilTick = zombie.getPersistentData().getLong(FOCUS_UNTIL_TICK_KEY);
+        if (untilTick <= level.getGameTime()) {
+            clearBarrierFocus(zombie);
+            return null;
+        }
+
+        if (!zombie.getPersistentData().contains(FOCUS_X_KEY)
+            || !zombie.getPersistentData().contains(FOCUS_Y_KEY)
+            || !zombie.getPersistentData().contains(FOCUS_Z_KEY)) {
+            clearBarrierFocus(zombie);
+            return null;
+        }
+
+        BlockPos pos = new BlockPos(
+            zombie.getPersistentData().getInt(FOCUS_X_KEY),
+            zombie.getPersistentData().getInt(FOCUS_Y_KEY),
+            zombie.getPersistentData().getInt(FOCUS_Z_KEY)
+        );
+        BarrierBlockInspection inspection = inspectBarrierState(level, pos);
+        if (!inspection.supported()) {
+            clearBarrierFocus(zombie);
+            return null;
+        }
+
+        if (!shouldKeepFocusedBarrier(zombie, targetContext, inspection.normalizedPos())) {
+            clearBarrierFocus(zombie);
+            return null;
+        }
+
+        return inspection;
+    }
+
+    private static boolean shouldKeepFocusedBarrier(Zombie zombie, TargetContext targetContext, BlockPos barrierPos) {
+        if (zombie == null || targetContext == null || barrierPos == null) {
+            return false;
+        }
+
+        if (!targetContext.hasTarget()) {
+            return true;
+        }
+
+        double driftRadius = Math.max(0.5D, Config.barrierBreakFocusTargetDrift);
+        Vec3 barrierCenter = Vec3.atCenterOf(barrierPos);
+        boolean targetNearBarrier = barrierCenter.distanceTo(targetContext.targetPosition()) <= driftRadius;
+        boolean stillBetween = isBarrierBetweenZombieAndTarget(zombie, barrierPos, targetContext.targetPosition());
+        return targetNearBarrier || stillBetween;
+    }
+
+    public static void clearBarrierFocus(Zombie zombie) {
+        if (zombie == null) {
+            return;
+        }
+
+        zombie.getPersistentData().remove(FOCUS_X_KEY);
+        zombie.getPersistentData().remove(FOCUS_Y_KEY);
+        zombie.getPersistentData().remove(FOCUS_Z_KEY);
+        zombie.getPersistentData().remove(FOCUS_UNTIL_TICK_KEY);
     }
 
     private static Vec3 resolveDirection(Zombie zombie, TargetContext targetContext) {
@@ -646,7 +737,7 @@ public final class ZombieBarrierBreakHelper {
         for (int i = 1; i < steps; i++) {
             double t = (double) i / (double) steps;
             Vec3 sample = start.add(delta.scale(t));
-            if (BlockPos.containing(sample).equals(barrierPos)) {
+            if (isSameBarrierBlock(zombie, barrierPos, BlockPos.containing(sample))) {
                 return true;
             }
         }
@@ -677,19 +768,22 @@ public final class ZombieBarrierBreakHelper {
         }
 
         if (state.getBlock() instanceof DoorBlock && state.hasProperty(DoorBlock.FACING)) {
-            Direction facing = state.getValue(DoorBlock.FACING);
-            Vec3 front = new Vec3(facing.getStepX(), 0.0D, facing.getStepZ());
+            Vec3 front = resolveDoorAttackFront(barrierCenter, state, targetPos);
             Vec3 lateralAxis = new Vec3(-front.z, 0.0D, front.x);
             Vec3 local = zombieCenter.subtract(barrierCenter);
             double frontSide = local.dot(front);
             double lateral = Math.abs(local.dot(lateralAxis));
-            if (Config.barrierBreakRejectZombiesBehindBarrier && frontSide < 0.0D) {
+            double maxDepth = Math.max(0.1D, Config.barrierBreakFrontDepth);
+            if (Config.barrierBreakRejectZombiesBehindBarrier && targetPos != null && frontSide < 0.0D) {
                 return false;
             }
 
+            boolean depthAllowed = targetPos != null
+                ? frontSide >= 0.0D && frontSide <= maxDepth
+                : Math.abs(frontSide) <= maxDepth;
+
             return lateral <= Math.max(0.1D, Config.barrierBreakFrontWidth)
-                && frontSide >= 0.0D
-                && frontSide <= Math.max(0.1D, Config.barrierBreakFrontDepth);
+                && depthAllowed;
         }
 
         if (targetPos != null) {
@@ -716,6 +810,35 @@ public final class ZombieBarrierBreakHelper {
         return dx <= Math.max(0.1D, Config.barrierBreakFrontWidth)
             || dz <= Math.max(0.1D, Config.barrierBreakFrontWidth)
             || zombieCenter.distanceTo(barrierCenter) <= Math.max(0.1D, Config.barrierBreakFrontDepth);
+    }
+
+    private static boolean isSameBarrierBlock(Zombie zombie, BlockPos normalizedBarrierPos, BlockPos sampledPos) {
+        if (normalizedBarrierPos == null || sampledPos == null) {
+            return false;
+        }
+
+        if (normalizedBarrierPos.equals(sampledPos)) {
+            return true;
+        }
+
+        if (zombie == null) {
+            return false;
+        }
+
+        BlockState state = zombie.level().getBlockState(normalizedBarrierPos);
+        return state.getBlock() instanceof DoorBlock && normalizedBarrierPos.above().equals(sampledPos);
+    }
+
+    private static Vec3 resolveDoorAttackFront(Vec3 barrierCenter, BlockState state, Vec3 targetPos) {
+        if (barrierCenter != null && targetPos != null) {
+            Vec3 attackFront = normalizeFlat(barrierCenter.subtract(targetPos));
+            if (attackFront.lengthSqr() > 0.0001D) {
+                return attackFront;
+            }
+        }
+
+        Direction facing = state.getValue(DoorBlock.FACING);
+        return new Vec3(facing.getStepX(), 0.0D, facing.getStepZ());
     }
 
     public enum BarrierKind {

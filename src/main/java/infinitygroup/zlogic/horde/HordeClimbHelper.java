@@ -5,6 +5,7 @@ import infinitygroup.zlogic.barrier.ZombieBarrierBreakHelper;
 import infinitygroup.zlogic.machine.MachineAttackHandler;
 import infinitygroup.zlogic.zombie.ZombieEligibilityHelper;
 import infinitygroup.zlogic.zombie.ZombieFamilyHelper;
+import infinitygroup.zlogic.zombie.ZombieTankHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -280,6 +281,10 @@ public final class HordeClimbHelper {
 
     public static boolean isEligibleZombie(Zombie zombie) {
         if (zombie == null || !ZombieFamilyHelper.isZombieFamily(zombie)) {
+            return false;
+        }
+
+        if (ZombieTankHandler.isTankZombie(zombie)) {
             return false;
         }
 

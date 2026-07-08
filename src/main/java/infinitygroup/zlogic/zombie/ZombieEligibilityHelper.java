@@ -57,6 +57,10 @@ public final class ZombieEligibilityHelper {
         return Config.aggressionAffectsVanillaZombies;
     }
 
+    public static boolean isEligibleForPassiveHunt(Zombie zombie) {
+        return isEligibleForAggression(zombie);
+    }
+
     public static boolean isEligibleForBaseDamage(Zombie zombie) {
         if (zombie == null) {
             return false;
