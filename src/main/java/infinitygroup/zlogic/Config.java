@@ -868,6 +868,86 @@ public class Config {
         .comment("Enable extra Horde Climb debug reasons.")
         .define("hordeClimbVerboseDebug", false);
 
+    private static final ModConfigSpec.BooleanValue ENABLE_HORDE_SIEGE_CLIMB = BUILDER
+        .comment("When true, strong Horde Climb uses the stricter siege activation rules.")
+        .define("enableHordeSiegeClimb", true);
+
+    private static final ModConfigSpec.IntValue HORDE_SIEGE_CLIMB_MIN_ZOMBIES = BUILDER
+        .comment("Minimum clustered zombies required to trigger Siege Climb.")
+        .defineInRange("hordeSiegeClimbMinZombies", 5, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.DoubleValue HORDE_SIEGE_CLIMB_GROUP_RADIUS = BUILDER
+        .comment("Radius used to count zombies participating in the same siege cluster.")
+        .defineInRange("hordeSiegeClimbGroupRadius", 4.0D, 0.1D, 64.0D);
+
+    private static final ModConfigSpec.DoubleValue HORDE_SIEGE_CLIMB_MAX_TARGET_DISTANCE = BUILDER
+        .comment("Maximum target distance allowed for Siege Climb.")
+        .defineInRange("hordeSiegeClimbMaxTargetDistance", 8.0D, 0.0D, 64.0D);
+
+    private static final ModConfigSpec.DoubleValue HORDE_SIEGE_CLIMB_MAX_OBSTACLE_DISTANCE = BUILDER
+        .comment("Maximum distance from the zombie to the obstacle used for Siege Climb.")
+        .defineInRange("hordeSiegeClimbMaxObstacleDistance", 2.0D, 0.1D, 16.0D);
+
+    private static final ModConfigSpec.IntValue HORDE_SIEGE_CLIMB_MIN_OBSTACLE_HEIGHT = BUILDER
+        .comment("Minimum wall height required for Siege Climb.")
+        .defineInRange("hordeSiegeClimbMinObstacleHeight", 2, 1, 16);
+
+    private static final ModConfigSpec.IntValue HORDE_SIEGE_CLIMB_MAX_OBSTACLE_HEIGHT = BUILDER
+        .comment("Maximum wall height that Siege Climb will attempt directly.")
+        .defineInRange("hordeSiegeClimbMaxObstacleHeight", 4, 1, 16);
+
+    private static final ModConfigSpec.BooleanValue HORDE_SIEGE_CLIMB_REQUIRE_OBSTACLE_IN_FRONT = BUILDER
+        .comment("When true, Siege Climb only triggers if a real obstacle is directly in front of the zombie.")
+        .define("hordeSiegeClimbRequireObstacleInFront", true);
+
+    private static final ModConfigSpec.BooleanValue HORDE_SIEGE_CLIMB_REQUIRE_TARGET_ABOVE_OR_BEHIND_OBSTACLE = BUILDER
+        .comment("When true, Siege Climb requires the target to be above or behind the obstacle.")
+        .define("hordeSiegeClimbRequireTargetAboveOrBehindObstacle", true);
+
+    private static final ModConfigSpec.IntValue HORDE_SIEGE_CLIMB_COOLDOWN_TICKS = BUILDER
+        .comment("Individual cooldown applied after a Siege Climb activation.")
+        .defineInRange("hordeSiegeClimbCooldownTicks", 80, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.IntValue HORDE_SIEGE_CLIMB_AREA_COOLDOWN_TICKS = BUILDER
+        .comment("Cooldown shared by Siege Climb activations in the same area.")
+        .defineInRange("hordeSiegeClimbAreaCooldownTicks", 80, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.DoubleValue HORDE_SIEGE_CLIMB_AREA_COOLDOWN_RADIUS = BUILDER
+        .comment("Area radius used to share Siege Climb cooldowns.")
+        .defineInRange("hordeSiegeClimbAreaCooldownRadius", 6.0D, 0.1D, 64.0D);
+
+    private static final ModConfigSpec.DoubleValue HORDE_SIEGE_CLIMB_VERTICAL_BOOST_BASE = BUILDER
+        .comment("Base vertical boost used by Siege Climb.")
+        .defineInRange("hordeSiegeClimbVerticalBoostBase", 0.42D, 0.0D, 4.0D);
+
+    private static final ModConfigSpec.DoubleValue HORDE_SIEGE_CLIMB_VERTICAL_BOOST_PER_HEIGHT = BUILDER
+        .comment("Extra vertical boost applied per obstacle block during Siege Climb.")
+        .defineInRange("hordeSiegeClimbVerticalBoostPerHeight", 0.12D, 0.0D, 4.0D);
+
+    private static final ModConfigSpec.DoubleValue HORDE_SIEGE_CLIMB_FORWARD_BOOST = BUILDER
+        .comment("Forward boost applied by Siege Climb.")
+        .defineInRange("hordeSiegeClimbForwardBoost", 0.18D, 0.0D, 4.0D);
+
+    private static final ModConfigSpec.BooleanValue HORDE_SIEGE_CLIMB_DEBUG_LOGS = BUILDER
+        .comment("Enable debug logging for Siege Climb decisions.")
+        .define("hordeSiegeClimbDebugLogs", false);
+
+    private static final ModConfigSpec.BooleanValue HORDE_CLIMB_SUPPRESS_ON_NATURAL_SLOPES = BUILDER
+        .comment("When true, strong Horde Climb is suppressed on gradual natural slopes.")
+        .define("hordeClimbSuppressOnNaturalSlopes", true);
+
+    private static final ModConfigSpec.IntValue HORDE_CLIMB_NATURAL_SLOPE_MAX_STEP_HEIGHT = BUILDER
+        .comment("Maximum rise per sampled step still considered a natural slope.")
+        .defineInRange("hordeClimbNaturalSlopeMaxStepHeight", 1, 0, 8);
+
+    private static final ModConfigSpec.IntValue HORDE_CLIMB_NATURAL_SLOPE_SCAN_DISTANCE = BUILDER
+        .comment("How many forward blocks are sampled when checking for natural slopes.")
+        .defineInRange("hordeClimbNaturalSlopeScanDistance", 4, 1, 16);
+
+    private static final ModConfigSpec.BooleanValue HORDE_CLIMB_REQUIRE_WALL_LIKE_OBSTACLE = BUILDER
+        .comment("When true, strong Horde Climb requires a wall-like obstacle instead of a terrain bump.")
+        .define("hordeClimbRequireWallLikeObstacle", true);
+
     private static final ModConfigSpec.BooleanValue ENABLE_ZOMBIE_BARRIER_BREAK = BUILDER
         .comment("Enable or disable the Zombie Barrier Break system.")
         .define("enableZombieBarrierBreak", true);
@@ -1316,6 +1396,26 @@ public class Config {
     public static boolean hordeClimbAllowPillarClimb;
     public static int hordeClimbPillarMinHeight;
     public static boolean hordeClimbVerboseDebug;
+    public static boolean enableHordeSiegeClimb;
+    public static int hordeSiegeClimbMinZombies;
+    public static double hordeSiegeClimbGroupRadius;
+    public static double hordeSiegeClimbMaxTargetDistance;
+    public static double hordeSiegeClimbMaxObstacleDistance;
+    public static int hordeSiegeClimbMinObstacleHeight;
+    public static int hordeSiegeClimbMaxObstacleHeight;
+    public static boolean hordeSiegeClimbRequireObstacleInFront;
+    public static boolean hordeSiegeClimbRequireTargetAboveOrBehindObstacle;
+    public static int hordeSiegeClimbCooldownTicks;
+    public static int hordeSiegeClimbAreaCooldownTicks;
+    public static double hordeSiegeClimbAreaCooldownRadius;
+    public static double hordeSiegeClimbVerticalBoostBase;
+    public static double hordeSiegeClimbVerticalBoostPerHeight;
+    public static double hordeSiegeClimbForwardBoost;
+    public static boolean hordeSiegeClimbDebugLogs;
+    public static boolean hordeClimbSuppressOnNaturalSlopes;
+    public static int hordeClimbNaturalSlopeMaxStepHeight;
+    public static int hordeClimbNaturalSlopeScanDistance;
+    public static boolean hordeClimbRequireWallLikeObstacle;
     public static boolean enableZombieBarrierBreak;
     public static boolean barrierBreakOnlyEligibleZombies;
     public static boolean barrierBreakRequireFrontSide;
@@ -1591,6 +1691,26 @@ public class Config {
         hordeClimbAllowPillarClimb = HORDE_CLIMB_ALLOW_PILLAR_CLIMB.get();
         hordeClimbPillarMinHeight = HORDE_CLIMB_PILLAR_MIN_HEIGHT.get();
         hordeClimbVerboseDebug = HORDE_CLIMB_VERBOSE_DEBUG.get();
+        enableHordeSiegeClimb = ENABLE_HORDE_SIEGE_CLIMB.get();
+        hordeSiegeClimbMinZombies = HORDE_SIEGE_CLIMB_MIN_ZOMBIES.get();
+        hordeSiegeClimbGroupRadius = HORDE_SIEGE_CLIMB_GROUP_RADIUS.get();
+        hordeSiegeClimbMaxTargetDistance = HORDE_SIEGE_CLIMB_MAX_TARGET_DISTANCE.get();
+        hordeSiegeClimbMaxObstacleDistance = HORDE_SIEGE_CLIMB_MAX_OBSTACLE_DISTANCE.get();
+        hordeSiegeClimbMinObstacleHeight = HORDE_SIEGE_CLIMB_MIN_OBSTACLE_HEIGHT.get();
+        hordeSiegeClimbMaxObstacleHeight = HORDE_SIEGE_CLIMB_MAX_OBSTACLE_HEIGHT.get();
+        hordeSiegeClimbRequireObstacleInFront = HORDE_SIEGE_CLIMB_REQUIRE_OBSTACLE_IN_FRONT.get();
+        hordeSiegeClimbRequireTargetAboveOrBehindObstacle = HORDE_SIEGE_CLIMB_REQUIRE_TARGET_ABOVE_OR_BEHIND_OBSTACLE.get();
+        hordeSiegeClimbCooldownTicks = HORDE_SIEGE_CLIMB_COOLDOWN_TICKS.get();
+        hordeSiegeClimbAreaCooldownTicks = HORDE_SIEGE_CLIMB_AREA_COOLDOWN_TICKS.get();
+        hordeSiegeClimbAreaCooldownRadius = HORDE_SIEGE_CLIMB_AREA_COOLDOWN_RADIUS.get();
+        hordeSiegeClimbVerticalBoostBase = HORDE_SIEGE_CLIMB_VERTICAL_BOOST_BASE.get();
+        hordeSiegeClimbVerticalBoostPerHeight = HORDE_SIEGE_CLIMB_VERTICAL_BOOST_PER_HEIGHT.get();
+        hordeSiegeClimbForwardBoost = HORDE_SIEGE_CLIMB_FORWARD_BOOST.get();
+        hordeSiegeClimbDebugLogs = HORDE_SIEGE_CLIMB_DEBUG_LOGS.get();
+        hordeClimbSuppressOnNaturalSlopes = HORDE_CLIMB_SUPPRESS_ON_NATURAL_SLOPES.get();
+        hordeClimbNaturalSlopeMaxStepHeight = HORDE_CLIMB_NATURAL_SLOPE_MAX_STEP_HEIGHT.get();
+        hordeClimbNaturalSlopeScanDistance = HORDE_CLIMB_NATURAL_SLOPE_SCAN_DISTANCE.get();
+        hordeClimbRequireWallLikeObstacle = HORDE_CLIMB_REQUIRE_WALL_LIKE_OBSTACLE.get();
         enableZombieBarrierBreak = ENABLE_ZOMBIE_BARRIER_BREAK.get();
         barrierBreakOnlyEligibleZombies = BARRIER_BREAK_ONLY_ELIGIBLE_ZOMBIES.get();
         barrierBreakRequireFrontSide = BARRIER_BREAK_REQUIRE_FRONT_SIDE.get();

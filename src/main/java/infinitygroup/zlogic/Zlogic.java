@@ -24,7 +24,7 @@ import net.neoforged.neoforge.common.NeoForge;
 
 @Mod(Zlogic.MODID)
 public class Zlogic {
-    public static final String MODID = "zlogic";
+    public static final String MODID = "zlogicnew";
 
     public Zlogic(IEventBus modEventBus, ModContainer modContainer) {
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);

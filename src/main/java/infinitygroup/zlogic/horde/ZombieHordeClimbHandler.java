@@ -67,14 +67,16 @@ public final class ZombieHordeClimbHandler {
         if (!assessment.active()) {
             HordeClimbHelper.recordActivationMode(zombie, HordeClimbHelper.ActivationMode.NONE);
             debug(
-                "Horde climb skipped: zombie={} mode={} reason={} group={} height={} cooldown={} targetKind={}",
-                zombie.getType().toShortString(),
+                "ZLOGIC_HORDE_CLIMB_SKIPPED mode={} reason={} groupSize={} siegeGroupSize={} targetDistance={} obstacleDistance={} obstacleHeight={} naturalSlope={} wallLikeObstacle={}",
                 assessment.activationMode(),
                 assessment.reason(),
                 assessment.groupSize(),
-                formatDouble(assessment.effectiveHeight()),
-                assessment.cooldownRemaining(),
-                assessment.targetKind()
+                assessment.siegeGroupSize(),
+                formatDouble(assessment.horizontalDistance()),
+                formatDouble(assessment.obstacleDistance()),
+                assessment.obstacleHeight(),
+                assessment.naturalSlopeSuppressed(),
+                assessment.wallLikeObstacle()
             );
             return;
         }
@@ -92,31 +94,54 @@ public final class ZombieHordeClimbHandler {
             horizontal = horizontal.normalize();
         }
 
-        double verticalBoost = Math.max(0.0D, Config.hordeClimbVerticalBoostBase + assessment.effectiveHeight() * Config.hordeClimbVerticalBoostPerHeight);
-        double forwardBoost = Math.max(0.0D, Config.hordeClimbForwardBoost);
+        double verticalBoost;
+        double forwardBoost;
+        if (assessment.activationMode() == HordeClimbHelper.ActivationMode.SIEGE_CLIMB) {
+            double climbHeight = Math.max(0.0D, assessment.obstacleHeight());
+            verticalBoost = Math.max(0.0D, Config.hordeSiegeClimbVerticalBoostBase + climbHeight * Config.hordeSiegeClimbVerticalBoostPerHeight);
+            forwardBoost = Math.max(0.0D, Config.hordeSiegeClimbForwardBoost);
+        } else {
+            verticalBoost = Math.max(0.0D, Config.hordeClimbVerticalBoostBase + assessment.effectiveHeight() * Config.hordeClimbVerticalBoostPerHeight);
+            forwardBoost = Math.max(0.0D, Config.hordeClimbForwardBoost);
+        }
         Vec3 impulse = horizontal.scale(forwardBoost).add(0.0D, verticalBoost, 0.0D);
         zombie.setDeltaMovement(zombie.getDeltaMovement().add(impulse));
         zombie.hasImpulse = true;
 
         List<Zombie> nearbyZombies = HordeClimbHelper.collectEligibleNearbyZombies(level, zombie);
         HordeClimbVisualHelper.playClimbEffects(level, zombie, nearbyZombies, assessment);
-        HordeClimbHelper.scheduleCooldown(zombie, gameTime);
+        HordeClimbHelper.scheduleCooldown(zombie, gameTime, assessment.activationMode());
+        if (assessment.activationMode() == HordeClimbHelper.ActivationMode.SIEGE_CLIMB && assessment.obstaclePos() != null) {
+            HordeClimbHelper.scheduleSiegeAreaCooldown(level, assessment.obstaclePos(), gameTime);
+        }
         HordeClimbHelper.recordActivationMode(zombie, assessment.activationMode());
 
-        debug(
-            "Horde climb triggered: zombie={} mode={} group={} height={} impulse={} targetKind={} nextTick={}",
-            zombie.getType().toShortString(),
-            assessment.activationMode(),
-            assessment.groupSize(),
-            formatDouble(assessment.effectiveHeight()),
-            formatVec(impulse),
-            assessment.targetKind(),
-            HordeClimbHelper.getNextTick(zombie)
-        );
+        if (assessment.activationMode() == HordeClimbHelper.ActivationMode.SIEGE_CLIMB) {
+            debug(
+                "ZLOGIC_HORDE_SIEGE_CLIMB_TRIGGERED groupSize={} siegeGroupSize={} targetDistance={} obstacleHeight={} impulse={} areaCooldown={}",
+                assessment.groupSize(),
+                assessment.siegeGroupSize(),
+                formatDouble(assessment.horizontalDistance()),
+                assessment.obstacleHeight(),
+                formatVec(impulse),
+                Math.max(1, Config.hordeSiegeClimbAreaCooldownTicks)
+            );
+        } else {
+            debug(
+                "Horde climb triggered: zombie={} mode={} group={} height={} impulse={} targetKind={} nextTick={}",
+                zombie.getType().toShortString(),
+                assessment.activationMode(),
+                assessment.groupSize(),
+                formatDouble(assessment.effectiveHeight()),
+                formatVec(impulse),
+                assessment.targetKind(),
+                HordeClimbHelper.getNextTick(zombie)
+            );
+        }
     }
 
     private static void debug(String message, Object... args) {
-        if (Config.hordeClimbDebugLogs || Config.debugLogs) {
+        if (Config.hordeClimbDebugLogs || Config.hordeSiegeClimbDebugLogs || Config.debugLogs) {
             LOGGER.debug(message, args);
         }
     }
