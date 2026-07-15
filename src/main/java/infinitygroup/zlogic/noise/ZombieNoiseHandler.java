@@ -94,6 +94,19 @@ public final class ZombieNoiseHandler {
         alertNearbyZombies(level, zombie, selectedNoise, reaction.playerTarget());
     }
 
+    public static boolean hasActiveNoiseDirective(ServerLevel level, Zombie zombie) {
+        if (level == null || zombie == null || !Config.enableNoiseSystem) {
+            return false;
+        }
+
+        BlockPos target = readNoiseTarget(zombie);
+        if (target == null) {
+            return false;
+        }
+
+        return !zombie.getNavigation().isDone() || getNextNoiseNavTick(zombie) > level.getGameTime();
+    }
+
     private static NoiseEvent selectNoise(Zombie zombie, List<NoiseEvent> noises) {
         double multiplier = Math.max(0.0D, Config.zombieHearNoiseRadiusMultiplier);
         if (multiplier <= 0.0D) {

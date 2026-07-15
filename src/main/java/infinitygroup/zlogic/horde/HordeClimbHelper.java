@@ -341,6 +341,24 @@ public final class HordeClimbHelper {
         });
     }
 
+    public static TargetContext resolveTargetContext(ServerLevel level, Zombie zombie) {
+        if (level == null || zombie == null) {
+            return new TargetContext(false, TargetKind.NONE, Vec3.ZERO, BlockPos.ZERO, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0);
+        }
+
+        return resolveTarget(level, zombie);
+    }
+
+    public static Vec3 resolveClimbDirection(Zombie zombie, TargetContext targetContext) {
+        if (zombie == null) {
+            return Vec3.ZERO;
+        }
+
+        return resolveBoostDirection(zombie, targetContext == null
+            ? new TargetContext(false, TargetKind.NONE, Vec3.ZERO, BlockPos.containing(zombie.position()), 0.0D, zombie.getY(), 0.0D, 0.0D, 0.0D, zombie.blockPosition().getY())
+            : targetContext);
+    }
+
     private static SiegeEvaluation evaluateSiegeClimb(
         ServerLevel level,
         Zombie zombie,
@@ -905,6 +923,7 @@ public final class HordeClimbHelper {
 
     public enum ActivationMode {
         NONE,
+        BODY_STACK_ASSIST,
         OBSTACLE,
         TARGET_ELEVATION,
         SIEGE_CLIMB

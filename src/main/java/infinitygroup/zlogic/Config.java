@@ -92,6 +92,190 @@ public class Config {
         .comment("Enable debug logging for the noise system.")
         .define("zombieNoiseDebugLogs", false);
 
+    private static final ModConfigSpec.BooleanValue ENABLE_BLOOD_SENSE = BUILDER
+        .comment("Enable the blood trace investigation system for zombies.")
+        .define("enableBloodSense", true);
+
+    private static final ModConfigSpec.DoubleValue BLOOD_SENSE_RADIUS = BUILDER
+        .comment("Maximum radius zombies use to search for blood traces.")
+        .defineInRange("bloodSenseRadius", 32.0D, 1.0D, 256.0D);
+
+    private static final ModConfigSpec.IntValue BLOOD_TRACE_LIFETIME_TICKS = BUILDER
+        .comment("Base lifetime in ticks for a blood trace.")
+        .defineInRange("bloodTraceLifetimeTicks", 20 * 60 * 3, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.IntValue BLOOD_TRACE_MAX_EVENTS_GLOBAL = BUILDER
+        .comment("Maximum number of runtime blood traces stored globally.")
+        .defineInRange("bloodTraceMaxEventsGlobal", 600, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.IntValue BLOOD_TRACE_MAX_EVENTS_PER_CHUNK = BUILDER
+        .comment("Maximum number of runtime blood traces stored in one chunk.")
+        .defineInRange("bloodTraceMaxEventsPerChunk", 24, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.DoubleValue BLOOD_TRACE_MIN_DAMAGE = BUILDER
+        .comment("Minimum final damage required to create a blood trace.")
+        .defineInRange("bloodTraceMinDamage", 2.0D, 0.0D, 1024.0D);
+
+    private static final ModConfigSpec.DoubleValue BLOOD_TRACE_BASE_INTENSITY = BUILDER
+        .comment("Base intensity applied to every blood trace.")
+        .defineInRange("bloodTraceBaseIntensity", 0.35D, 0.0D, 1.0D);
+
+    private static final ModConfigSpec.DoubleValue BLOOD_TRACE_DAMAGE_INTENSITY_MULTIPLIER = BUILDER
+        .comment("Extra blood trace intensity added per point of final damage.")
+        .defineInRange("bloodTraceDamageIntensityMultiplier", 0.08D, 0.0D, 4.0D);
+
+    private static final ModConfigSpec.BooleanValue BLOOD_TRACE_LOW_HEALTH_BONUS = BUILDER
+        .comment("When true, entities below the low-health threshold produce stronger blood traces.")
+        .define("bloodTraceLowHealthBonus", true);
+
+    private static final ModConfigSpec.DoubleValue BLOOD_TRACE_LOW_HEALTH_THRESHOLD = BUILDER
+        .comment("Health percentage threshold used for the blood low-health bonus and weak trail.")
+        .defineInRange("bloodTraceLowHealthThreshold", 0.35D, 0.0D, 1.0D);
+
+    private static final ModConfigSpec.DoubleValue BLOOD_TRACE_LOW_HEALTH_BONUS_INTENSITY = BUILDER
+        .comment("Extra intensity added when the source entity is below the low-health threshold.")
+        .defineInRange("bloodTraceLowHealthBonusIntensity", 0.25D, 0.0D, 1.0D);
+
+    private static final ModConfigSpec.DoubleValue BLOOD_TRACE_RAIN_DECAY_MULTIPLIER = BUILDER
+        .comment("How much faster blood traces age while exposed to rain.")
+        .defineInRange("bloodTraceRainDecayMultiplier", 2.5D, 1.0D, 32.0D);
+
+    private static final ModConfigSpec.DoubleValue BLOOD_TRACE_WATER_DECAY_MULTIPLIER = BUILDER
+        .comment("How much faster blood traces age while in water.")
+        .defineInRange("bloodTraceWaterDecayMultiplier", 5.0D, 1.0D, 64.0D);
+
+    private static final ModConfigSpec.BooleanValue BLOOD_TRACE_ATTRACT_PLAYERS = BUILDER
+        .comment("When true, blood traces created by players may attract zombies.")
+        .define("bloodTraceAttractPlayers", true);
+
+    private static final ModConfigSpec.BooleanValue BLOOD_TRACE_ATTRACT_MOBS = BUILDER
+        .comment("When true, blood traces created by non-player living mobs may attract zombies.")
+        .define("bloodTraceAttractMobs", true);
+
+    private static final ModConfigSpec.BooleanValue BLOOD_TRACE_ONLY_ATTRACT_ZOMBIES = BUILDER
+        .comment("When true, only zombie-family entities use the blood sense investigation logic.")
+        .define("bloodTraceOnlyAttractZombies", true);
+
+    private static final ModConfigSpec.DoubleValue BLOOD_TRACE_INVESTIGATION_SPEED = BUILDER
+        .comment("Navigation speed used when a zombie investigates a blood trace.")
+        .defineInRange("bloodTraceInvestigationSpeed", 1.1D, 0.0D, 4.0D);
+
+    private static final ModConfigSpec.IntValue BLOOD_TRACE_SCAN_INTERVAL_TICKS = BUILDER
+        .comment("How often zombies re-scan for blood traces.")
+        .defineInRange("bloodTraceScanIntervalTicks", 20, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.DoubleValue BLOOD_TRACE_MIN_SCORE = BUILDER
+        .comment("Minimum score required for a zombie to investigate a blood trace.")
+        .defineInRange("bloodTraceMinScore", 0.15D, -4.0D, 4.0D);
+
+    private static final ModConfigSpec.BooleanValue ENABLE_LOW_HEALTH_BLOOD_TRAIL = BUILDER
+        .comment("When true, low-health players drip weak blood traces over time.")
+        .define("enableLowHealthBloodTrail", true);
+
+    private static final ModConfigSpec.IntValue LOW_HEALTH_BLOOD_TRAIL_INTERVAL_TICKS = BUILDER
+        .comment("Interval in ticks between weak low-health blood trail drops.")
+        .defineInRange("lowHealthBloodTrailIntervalTicks", 80, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.DoubleValue LOW_HEALTH_BLOOD_TRAIL_INTENSITY = BUILDER
+        .comment("Intensity used by the weak low-health blood trail.")
+        .defineInRange("lowHealthBloodTrailIntensity", 0.18D, 0.0D, 1.0D);
+
+    private static final ModConfigSpec.BooleanValue BLOOD_TRACE_DEBUG = BUILDER
+        .comment("Enable debug logging for blood traces and zombie blood investigation.")
+        .define("bloodTraceDebug", false);
+
+    private static final ModConfigSpec.BooleanValue ENABLE_LIGHT_SENSE = BUILDER
+        .comment("Enable the temporary light interest investigation system for zombies.")
+        .define("enableLightSense", true);
+
+    private static final ModConfigSpec.DoubleValue LIGHT_SENSE_RADIUS = BUILDER
+        .comment("Maximum radius zombies use to search for light interest events.")
+        .defineInRange("lightSenseRadius", 28.0D, 1.0D, 256.0D);
+
+    private static final ModConfigSpec.IntValue LIGHT_INTEREST_LIFETIME_TICKS = BUILDER
+        .comment("Base lifetime in ticks for light interest events.")
+        .defineInRange("lightInterestLifetimeTicks", 20 * 45, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.IntValue LIGHT_INTEREST_MAX_EVENTS_GLOBAL = BUILDER
+        .comment("Maximum number of runtime light interest events stored globally.")
+        .defineInRange("lightInterestMaxEventsGlobal", 400, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.IntValue LIGHT_INTEREST_MAX_EVENTS_PER_CHUNK = BUILDER
+        .comment("Maximum number of runtime light interest events stored in one chunk.")
+        .defineInRange("lightInterestMaxEventsPerChunk", 16, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.BooleanValue LIGHT_SENSE_ONLY_IN_DARKNESS = BUILDER
+        .comment("When true, light interest only matters in dark environments.")
+        .define("lightSenseOnlyInDarkness", true);
+
+    private static final ModConfigSpec.IntValue LIGHT_SENSE_MAX_SKY_LIGHT = BUILDER
+        .comment("Maximum skylight allowed when light sense is restricted to darkness.")
+        .defineInRange("lightSenseMaxSkyLight", 8, 0, 15);
+
+    private static final ModConfigSpec.IntValue LIGHT_SENSE_MIN_BLOCK_LIGHT = BUILDER
+        .comment("Minimum block light emission required to create a light interest event.")
+        .defineInRange("lightSenseMinBlockLight", 8, 0, 15);
+
+    private static final ModConfigSpec.BooleanValue LIGHT_SENSE_REACT_TO_PLACED_LIGHTS = BUILDER
+        .comment("When true, newly placed light-emitting blocks create light interest.")
+        .define("lightSenseReactToPlacedLights", true);
+
+    private static final ModConfigSpec.BooleanValue LIGHT_SENSE_REACT_TO_REDSTONE_LIGHTS = BUILDER
+        .comment("When true, redstone-driven light changes create light interest.")
+        .define("lightSenseReactToRedstoneLights", true);
+
+    private static final ModConfigSpec.BooleanValue LIGHT_SENSE_REACT_TO_FLICKER = BUILDER
+        .comment("When true, neighbor-driven light flicker can create light interest.")
+        .define("lightSenseReactToFlicker", true);
+
+    private static final ModConfigSpec.BooleanValue LIGHT_SENSE_REACT_TO_MACHINE_LIGHT = BUILDER
+        .comment("When true, active machine light can create light interest.")
+        .define("lightSenseReactToMachineLight", true);
+
+    private static final ModConfigSpec.BooleanValue LIGHT_SENSE_REACT_TO_HELD_LIGHTS = BUILDER
+        .comment("Reserved for future held-light sensing. Disabled by default.")
+        .define("lightSenseReactToHeldLights", false);
+
+    private static final ModConfigSpec.DoubleValue LIGHT_PLACED_INTENSITY = BUILDER
+        .comment("Base intensity for newly placed light sources.")
+        .defineInRange("lightPlacedIntensity", 0.35D, 0.0D, 2.0D);
+
+    private static final ModConfigSpec.DoubleValue LIGHT_FLICKER_INTENSITY = BUILDER
+        .comment("Base intensity for flickering light changes.")
+        .defineInRange("lightFlickerIntensity", 0.65D, 0.0D, 2.0D);
+
+    private static final ModConfigSpec.DoubleValue LIGHT_REDSTONE_INTENSITY = BUILDER
+        .comment("Base intensity for redstone-like light changes.")
+        .defineInRange("lightRedstoneIntensity", 0.55D, 0.0D, 2.0D);
+
+    private static final ModConfigSpec.DoubleValue LIGHT_MACHINE_INTENSITY = BUILDER
+        .comment("Base intensity for active machine light interest.")
+        .defineInRange("lightMachineIntensity", 0.75D, 0.0D, 2.0D);
+
+    private static final ModConfigSpec.DoubleValue LIGHT_HELD_INTENSITY = BUILDER
+        .comment("Reserved held-light intensity for future use.")
+        .defineInRange("lightHeldIntensity", 0.45D, 0.0D, 2.0D);
+
+    private static final ModConfigSpec.DoubleValue LIGHT_SENSE_INVESTIGATION_SPEED = BUILDER
+        .comment("Navigation speed used when a zombie investigates a light interest event.")
+        .defineInRange("lightSenseInvestigationSpeed", 1.0D, 0.0D, 4.0D);
+
+    private static final ModConfigSpec.IntValue LIGHT_SENSE_SCAN_INTERVAL_TICKS = BUILDER
+        .comment("How often zombies re-scan for light interest events.")
+        .defineInRange("lightSenseScanIntervalTicks", 25, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.DoubleValue LIGHT_SENSE_MIN_SCORE = BUILDER
+        .comment("Minimum score required for a zombie to investigate a light interest event.")
+        .defineInRange("lightSenseMinScore", 0.20D, -4.0D, 4.0D);
+
+    private static final ModConfigSpec.IntValue LIGHT_INTEREST_SAME_POS_COOLDOWN_TICKS = BUILDER
+        .comment("Cooldown in ticks before the same light position can generate a fresh event again.")
+        .defineInRange("lightInterestSamePosCooldownTicks", 20 * 15, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.BooleanValue LIGHT_SENSE_DEBUG = BUILDER
+        .comment("Enable debug logging for light interest creation and zombie investigation.")
+        .define("lightSenseDebug", false);
+
     private static final ModConfigSpec.BooleanValue ENABLE_ZOMBIE_BASE_DAMAGE_SYSTEM = BUILDER
         .comment("Enable or disable the zombie base damage system.")
         .define("enableZombieBaseDamageSystem", true);
@@ -962,6 +1146,58 @@ public class Config {
         .comment("How often each zombie checks Horde Climb conditions.")
         .defineInRange("hordeClimbCheckIntervalTicks", 20, 1, Integer.MAX_VALUE);
 
+    private static final ModConfigSpec.BooleanValue ENABLE_HORDE_CLIMB_BODY_STACK_ASSIST = BUILDER
+        .comment("Enable the lightweight body-stack assist fallback for Horde Climb.")
+        .define("enableHordeClimbBodyStackAssist", true);
+
+    private static final ModConfigSpec.IntValue HORDE_CLIMB_BODY_STACK_MIN_ZOMBIES = BUILDER
+        .comment("Minimum nearby support zombies required for body-stack assist.")
+        .defineInRange("hordeClimbBodyStackMinZombies", 2, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.DoubleValue HORDE_CLIMB_BODY_STACK_RADIUS = BUILDER
+        .comment("Horizontal radius used to count support zombies for body-stack assist.")
+        .defineInRange("hordeClimbBodyStackRadius", 1.35D, 0.1D, 16.0D);
+
+    private static final ModConfigSpec.DoubleValue HORDE_CLIMB_BODY_STACK_VERTICAL_BOOST_MIN = BUILDER
+        .comment("Minimum vertical boost applied by body-stack assist.")
+        .defineInRange("hordeClimbBodyStackVerticalBoostMin", 0.12D, 0.0D, 4.0D);
+
+    private static final ModConfigSpec.DoubleValue HORDE_CLIMB_BODY_STACK_VERTICAL_BOOST_MAX = BUILDER
+        .comment("Maximum vertical boost applied by body-stack assist.")
+        .defineInRange("hordeClimbBodyStackVerticalBoostMax", 0.22D, 0.0D, 4.0D);
+
+    private static final ModConfigSpec.DoubleValue HORDE_CLIMB_BODY_STACK_FORWARD_BOOST = BUILDER
+        .comment("Forward boost applied by body-stack assist.")
+        .defineInRange("hordeClimbBodyStackForwardBoost", 0.08D, 0.0D, 4.0D);
+
+    private static final ModConfigSpec.IntValue HORDE_CLIMB_BODY_STACK_COOLDOWN_TICKS = BUILDER
+        .comment("Cooldown in ticks for body-stack assist.")
+        .defineInRange("hordeClimbBodyStackCooldownTicks", 45, 1, Integer.MAX_VALUE);
+
+    private static final ModConfigSpec.BooleanValue HORDE_CLIMB_BODY_STACK_REQUIRE_TARGET_ABOVE = BUILDER
+        .comment("When true, body-stack assist only triggers if the target is above the zombie.")
+        .define("hordeClimbBodyStackRequireTargetAbove", true);
+
+    private static final ModConfigSpec.DoubleValue HORDE_CLIMB_BODY_STACK_MIN_TARGET_HEIGHT_DIFF = BUILDER
+        .comment("Minimum target Y difference required for body-stack assist.")
+        .defineInRange("hordeClimbBodyStackMinTargetHeightDiff", 1.25D, 0.0D, 64.0D);
+
+    private static final ModConfigSpec.DoubleValue HORDE_CLIMB_BODY_STACK_MAX_EXTRA_HEIGHT = BUILDER
+        .comment("Maximum extra target height where body-stack assist is allowed.")
+        .defineInRange("hordeClimbBodyStackMaxExtraHeight", 8.0D, 0.0D, 64.0D);
+
+    private static final ModConfigSpec.BooleanValue HORDE_CLIMB_BODY_STACK_ONLY_WHEN_BLOCKED = BUILDER
+        .comment("When true, body-stack assist only triggers when the zombie is blocked by an obstacle.")
+        .define("hordeClimbBodyStackOnlyWhenBlocked", true);
+
+    private static final ModConfigSpec.DoubleValue HORDE_CLIMB_BODY_STACK_CHANCE = BUILDER
+        .comment("Chance for body-stack assist to trigger when all conditions are met.")
+        .defineInRange("hordeClimbBodyStackChance", 0.35D, 0.0D, 1.0D);
+
+    private static final ModConfigSpec.IntValue HORDE_CLIMB_BODY_STACK_APPLY_SLOW_FALLING_TICKS = BUILDER
+        .comment("Short Slow Falling duration applied after body-stack assist to avoid harsh fall damage.")
+        .defineInRange("hordeClimbBodyStackApplySlowFallingTicks", 8, 0, 200);
+
     private static final ModConfigSpec.BooleanValue HORDE_CLIMB_DEBUG_LOGS = BUILDER
         .comment("Enable debug logging for Horde Climb.")
         .define("hordeClimbDebugLogs", false);
@@ -1368,6 +1604,52 @@ public class Config {
     public static boolean zombieNoiseRequiresLineOfSight;
     public static double zombieNoiseRetargetChance;
     public static boolean zombieNoiseDebugLogs;
+    public static boolean enableBloodSense;
+    public static double bloodSenseRadius;
+    public static int bloodTraceLifetimeTicks;
+    public static int bloodTraceMaxEventsGlobal;
+    public static int bloodTraceMaxEventsPerChunk;
+    public static double bloodTraceMinDamage;
+    public static double bloodTraceBaseIntensity;
+    public static double bloodTraceDamageIntensityMultiplier;
+    public static boolean bloodTraceLowHealthBonus;
+    public static double bloodTraceLowHealthThreshold;
+    public static double bloodTraceLowHealthBonusIntensity;
+    public static double bloodTraceRainDecayMultiplier;
+    public static double bloodTraceWaterDecayMultiplier;
+    public static boolean bloodTraceAttractPlayers;
+    public static boolean bloodTraceAttractMobs;
+    public static boolean bloodTraceOnlyAttractZombies;
+    public static double bloodTraceInvestigationSpeed;
+    public static int bloodTraceScanIntervalTicks;
+    public static double bloodTraceMinScore;
+    public static boolean enableLowHealthBloodTrail;
+    public static int lowHealthBloodTrailIntervalTicks;
+    public static double lowHealthBloodTrailIntensity;
+    public static boolean bloodTraceDebug;
+    public static boolean enableLightSense;
+    public static double lightSenseRadius;
+    public static int lightInterestLifetimeTicks;
+    public static int lightInterestMaxEventsGlobal;
+    public static int lightInterestMaxEventsPerChunk;
+    public static boolean lightSenseOnlyInDarkness;
+    public static int lightSenseMaxSkyLight;
+    public static int lightSenseMinBlockLight;
+    public static boolean lightSenseReactToPlacedLights;
+    public static boolean lightSenseReactToRedstoneLights;
+    public static boolean lightSenseReactToFlicker;
+    public static boolean lightSenseReactToMachineLight;
+    public static boolean lightSenseReactToHeldLights;
+    public static double lightPlacedIntensity;
+    public static double lightFlickerIntensity;
+    public static double lightRedstoneIntensity;
+    public static double lightMachineIntensity;
+    public static double lightHeldIntensity;
+    public static double lightSenseInvestigationSpeed;
+    public static int lightSenseScanIntervalTicks;
+    public static double lightSenseMinScore;
+    public static int lightInterestSamePosCooldownTicks;
+    public static boolean lightSenseDebug;
     public static boolean enableZombieBaseDamageSystem;
     public static boolean zombieBaseDamageAffectsVanillaZombies;
     public static boolean zombieBaseDamageAffectsDaySpawnedZombies;
@@ -1581,6 +1863,19 @@ public class Config {
     public static boolean hordeClimbGroupVisual;
     public static double hordeClimbAttemptChance;
     public static int hordeClimbCheckIntervalTicks;
+    public static boolean enableHordeClimbBodyStackAssist;
+    public static int hordeClimbBodyStackMinZombies;
+    public static double hordeClimbBodyStackRadius;
+    public static double hordeClimbBodyStackVerticalBoostMin;
+    public static double hordeClimbBodyStackVerticalBoostMax;
+    public static double hordeClimbBodyStackForwardBoost;
+    public static int hordeClimbBodyStackCooldownTicks;
+    public static boolean hordeClimbBodyStackRequireTargetAbove;
+    public static double hordeClimbBodyStackMinTargetHeightDiff;
+    public static double hordeClimbBodyStackMaxExtraHeight;
+    public static boolean hordeClimbBodyStackOnlyWhenBlocked;
+    public static double hordeClimbBodyStackChance;
+    public static int hordeClimbBodyStackApplySlowFallingTicks;
     public static boolean hordeClimbDebugLogs;
     public static boolean enableHordeClimbTargetElevationMode;
     public static double hordeClimbTargetMinYDifference;
@@ -1700,6 +1995,52 @@ public class Config {
         zombieNoiseRequiresLineOfSight = ZOMBIE_NOISE_REQUIRES_LINE_OF_SIGHT.get();
         zombieNoiseRetargetChance = ZOMBIE_NOISE_RETARGET_CHANCE.get();
         zombieNoiseDebugLogs = ZOMBIE_NOISE_DEBUG_LOGS.get();
+        enableBloodSense = ENABLE_BLOOD_SENSE.get();
+        bloodSenseRadius = BLOOD_SENSE_RADIUS.get();
+        bloodTraceLifetimeTicks = BLOOD_TRACE_LIFETIME_TICKS.get();
+        bloodTraceMaxEventsGlobal = BLOOD_TRACE_MAX_EVENTS_GLOBAL.get();
+        bloodTraceMaxEventsPerChunk = BLOOD_TRACE_MAX_EVENTS_PER_CHUNK.get();
+        bloodTraceMinDamage = BLOOD_TRACE_MIN_DAMAGE.get();
+        bloodTraceBaseIntensity = BLOOD_TRACE_BASE_INTENSITY.get();
+        bloodTraceDamageIntensityMultiplier = BLOOD_TRACE_DAMAGE_INTENSITY_MULTIPLIER.get();
+        bloodTraceLowHealthBonus = BLOOD_TRACE_LOW_HEALTH_BONUS.get();
+        bloodTraceLowHealthThreshold = BLOOD_TRACE_LOW_HEALTH_THRESHOLD.get();
+        bloodTraceLowHealthBonusIntensity = BLOOD_TRACE_LOW_HEALTH_BONUS_INTENSITY.get();
+        bloodTraceRainDecayMultiplier = BLOOD_TRACE_RAIN_DECAY_MULTIPLIER.get();
+        bloodTraceWaterDecayMultiplier = BLOOD_TRACE_WATER_DECAY_MULTIPLIER.get();
+        bloodTraceAttractPlayers = BLOOD_TRACE_ATTRACT_PLAYERS.get();
+        bloodTraceAttractMobs = BLOOD_TRACE_ATTRACT_MOBS.get();
+        bloodTraceOnlyAttractZombies = BLOOD_TRACE_ONLY_ATTRACT_ZOMBIES.get();
+        bloodTraceInvestigationSpeed = BLOOD_TRACE_INVESTIGATION_SPEED.get();
+        bloodTraceScanIntervalTicks = BLOOD_TRACE_SCAN_INTERVAL_TICKS.get();
+        bloodTraceMinScore = BLOOD_TRACE_MIN_SCORE.get();
+        enableLowHealthBloodTrail = ENABLE_LOW_HEALTH_BLOOD_TRAIL.get();
+        lowHealthBloodTrailIntervalTicks = LOW_HEALTH_BLOOD_TRAIL_INTERVAL_TICKS.get();
+        lowHealthBloodTrailIntensity = LOW_HEALTH_BLOOD_TRAIL_INTENSITY.get();
+        bloodTraceDebug = BLOOD_TRACE_DEBUG.get();
+        enableLightSense = ENABLE_LIGHT_SENSE.get();
+        lightSenseRadius = LIGHT_SENSE_RADIUS.get();
+        lightInterestLifetimeTicks = LIGHT_INTEREST_LIFETIME_TICKS.get();
+        lightInterestMaxEventsGlobal = LIGHT_INTEREST_MAX_EVENTS_GLOBAL.get();
+        lightInterestMaxEventsPerChunk = LIGHT_INTEREST_MAX_EVENTS_PER_CHUNK.get();
+        lightSenseOnlyInDarkness = LIGHT_SENSE_ONLY_IN_DARKNESS.get();
+        lightSenseMaxSkyLight = LIGHT_SENSE_MAX_SKY_LIGHT.get();
+        lightSenseMinBlockLight = LIGHT_SENSE_MIN_BLOCK_LIGHT.get();
+        lightSenseReactToPlacedLights = LIGHT_SENSE_REACT_TO_PLACED_LIGHTS.get();
+        lightSenseReactToRedstoneLights = LIGHT_SENSE_REACT_TO_REDSTONE_LIGHTS.get();
+        lightSenseReactToFlicker = LIGHT_SENSE_REACT_TO_FLICKER.get();
+        lightSenseReactToMachineLight = LIGHT_SENSE_REACT_TO_MACHINE_LIGHT.get();
+        lightSenseReactToHeldLights = LIGHT_SENSE_REACT_TO_HELD_LIGHTS.get();
+        lightPlacedIntensity = LIGHT_PLACED_INTENSITY.get();
+        lightFlickerIntensity = LIGHT_FLICKER_INTENSITY.get();
+        lightRedstoneIntensity = LIGHT_REDSTONE_INTENSITY.get();
+        lightMachineIntensity = LIGHT_MACHINE_INTENSITY.get();
+        lightHeldIntensity = LIGHT_HELD_INTENSITY.get();
+        lightSenseInvestigationSpeed = LIGHT_SENSE_INVESTIGATION_SPEED.get();
+        lightSenseScanIntervalTicks = LIGHT_SENSE_SCAN_INTERVAL_TICKS.get();
+        lightSenseMinScore = LIGHT_SENSE_MIN_SCORE.get();
+        lightInterestSamePosCooldownTicks = LIGHT_INTEREST_SAME_POS_COOLDOWN_TICKS.get();
+        lightSenseDebug = LIGHT_SENSE_DEBUG.get();
         enableZombieBaseDamageSystem = ENABLE_ZOMBIE_BASE_DAMAGE_SYSTEM.get();
         zombieBaseDamageAffectsVanillaZombies = ZOMBIE_BASE_DAMAGE_AFFECTS_VANILLA_ZOMBIES.get();
         zombieBaseDamageAffectsDaySpawnedZombies = ZOMBIE_BASE_DAMAGE_AFFECTS_DAY_SPAWNED_ZOMBIES.get();
@@ -1913,6 +2254,19 @@ public class Config {
         hordeClimbGroupVisual = HORDE_CLIMB_GROUP_VISUAL.get();
         hordeClimbAttemptChance = HORDE_CLIMB_ATTEMPT_CHANCE.get();
         hordeClimbCheckIntervalTicks = HORDE_CLIMB_CHECK_INTERVAL_TICKS.get();
+        enableHordeClimbBodyStackAssist = ENABLE_HORDE_CLIMB_BODY_STACK_ASSIST.get();
+        hordeClimbBodyStackMinZombies = HORDE_CLIMB_BODY_STACK_MIN_ZOMBIES.get();
+        hordeClimbBodyStackRadius = HORDE_CLIMB_BODY_STACK_RADIUS.get();
+        hordeClimbBodyStackVerticalBoostMin = HORDE_CLIMB_BODY_STACK_VERTICAL_BOOST_MIN.get();
+        hordeClimbBodyStackVerticalBoostMax = HORDE_CLIMB_BODY_STACK_VERTICAL_BOOST_MAX.get();
+        hordeClimbBodyStackForwardBoost = HORDE_CLIMB_BODY_STACK_FORWARD_BOOST.get();
+        hordeClimbBodyStackCooldownTicks = HORDE_CLIMB_BODY_STACK_COOLDOWN_TICKS.get();
+        hordeClimbBodyStackRequireTargetAbove = HORDE_CLIMB_BODY_STACK_REQUIRE_TARGET_ABOVE.get();
+        hordeClimbBodyStackMinTargetHeightDiff = HORDE_CLIMB_BODY_STACK_MIN_TARGET_HEIGHT_DIFF.get();
+        hordeClimbBodyStackMaxExtraHeight = HORDE_CLIMB_BODY_STACK_MAX_EXTRA_HEIGHT.get();
+        hordeClimbBodyStackOnlyWhenBlocked = HORDE_CLIMB_BODY_STACK_ONLY_WHEN_BLOCKED.get();
+        hordeClimbBodyStackChance = HORDE_CLIMB_BODY_STACK_CHANCE.get();
+        hordeClimbBodyStackApplySlowFallingTicks = HORDE_CLIMB_BODY_STACK_APPLY_SLOW_FALLING_TICKS.get();
         hordeClimbDebugLogs = HORDE_CLIMB_DEBUG_LOGS.get();
         enableHordeClimbTargetElevationMode = ENABLE_HORDE_CLIMB_TARGET_ELEVATION_MODE.get();
         hordeClimbTargetMinYDifference = HORDE_CLIMB_TARGET_MIN_Y_DIFFERENCE.get();

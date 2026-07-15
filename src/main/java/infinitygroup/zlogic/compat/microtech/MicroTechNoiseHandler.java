@@ -5,6 +5,7 @@ import infinitygroup.zlogic.Config;
 import infinitygroup.zlogic.noise.NoiseManager;
 import infinitygroup.zlogic.noise.NoiseSourceType;
 import infinitygroup.zlogic.perf.PerformanceTracker;
+import infinitygroup.zlogic.senses.LightInterestManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
@@ -160,6 +161,7 @@ public final class MicroTechNoiseHandler {
                             Config.microTechMachineNoiseDurationTicks,
                             NoiseSourceType.MACHINE
                         );
+                        LightInterestManager.emitMachineLight(level, blockEntity.getBlockPos());
                         LAST_NOISE_TICK_BY_MACHINE.put(new MachineNoiseKey(level.dimension(), blockEntity.getBlockPos().asLong()), serverTick);
                         emitted++;
                         debug(

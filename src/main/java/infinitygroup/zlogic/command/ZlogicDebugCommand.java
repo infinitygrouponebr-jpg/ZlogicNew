@@ -6,12 +6,19 @@ import infinitygroup.zlogic.compat.OptionalModCompat;
 import infinitygroup.zlogic.compat.microtech.MicroTechCompat;
 import infinitygroup.zlogic.compat.microtech.MicroTechNoiseHandler;
 import infinitygroup.zlogic.barrier.ZombieBarrierBreakHelper;
+import infinitygroup.zlogic.horde.HordeBodyStackAssistHelper;
 import infinitygroup.zlogic.horde.HordeClimbHelper;
 import infinitygroup.zlogic.machine.MachineAttackHandler;
 import infinitygroup.zlogic.perf.PerformanceTracker;
 import infinitygroup.zlogic.noise.NoiseEvent;
 import infinitygroup.zlogic.noise.NoiseManager;
 import infinitygroup.zlogic.noise.NoiseSourceType;
+import infinitygroup.zlogic.senses.BloodTrace;
+import infinitygroup.zlogic.senses.BloodTraceManager;
+import infinitygroup.zlogic.senses.LightInterest;
+import infinitygroup.zlogic.senses.LightInterestManager;
+import infinitygroup.zlogic.senses.SenseTarget;
+import infinitygroup.zlogic.senses.ZombieSenseManager;
 import infinitygroup.zlogic.zombie.ZombieThreatLevelManager;
 import infinitygroup.zlogic.zombie.ZombieScalingLevelManager;
 import infinitygroup.zlogic.zombie.ZombieBaseDamageHandler;
@@ -94,6 +101,16 @@ public final class ZlogicDebugCommand {
                             Commands.literal("barrier_break")
                                 .requires(source -> source.hasPermission(2))
                                 .executes(context -> executeBarrierBreakDebug(context.getSource()))
+                        )
+                        .then(
+                            Commands.literal("blood")
+                                .requires(source -> source.hasPermission(2))
+                                .executes(context -> executeBloodDebug(context.getSource()))
+                        )
+                        .then(
+                            Commands.literal("light")
+                                .requires(source -> source.hasPermission(2))
+                                .executes(context -> executeLightDebug(context.getSource()))
                         )
                         .then(
                             Commands.literal("rescale_zombie")
@@ -563,6 +580,19 @@ public final class ZlogicDebugCommand {
         output.append("hordeClimbParticles: ").append(Config.hordeClimbParticles).append('\n');
         output.append("hordeClimbSounds: ").append(Config.hordeClimbSounds).append('\n');
         output.append("hordeClimbGroupVisual: ").append(Config.hordeClimbGroupVisual).append('\n');
+        output.append("enableHordeClimbBodyStackAssist: ").append(Config.enableHordeClimbBodyStackAssist).append('\n');
+        output.append("hordeClimbBodyStackMinZombies: ").append(Config.hordeClimbBodyStackMinZombies).append('\n');
+        output.append("hordeClimbBodyStackRadius: ").append(formatDouble(Config.hordeClimbBodyStackRadius)).append('\n');
+        output.append("hordeClimbBodyStackVerticalBoostMin: ").append(formatDouble(Config.hordeClimbBodyStackVerticalBoostMin)).append('\n');
+        output.append("hordeClimbBodyStackVerticalBoostMax: ").append(formatDouble(Config.hordeClimbBodyStackVerticalBoostMax)).append('\n');
+        output.append("hordeClimbBodyStackForwardBoost: ").append(formatDouble(Config.hordeClimbBodyStackForwardBoost)).append('\n');
+        output.append("hordeClimbBodyStackCooldownTicks: ").append(Config.hordeClimbBodyStackCooldownTicks).append('\n');
+        output.append("hordeClimbBodyStackRequireTargetAbove: ").append(Config.hordeClimbBodyStackRequireTargetAbove).append('\n');
+        output.append("hordeClimbBodyStackMinTargetHeightDiff: ").append(formatDouble(Config.hordeClimbBodyStackMinTargetHeightDiff)).append('\n');
+        output.append("hordeClimbBodyStackMaxExtraHeight: ").append(formatDouble(Config.hordeClimbBodyStackMaxExtraHeight)).append('\n');
+        output.append("hordeClimbBodyStackOnlyWhenBlocked: ").append(Config.hordeClimbBodyStackOnlyWhenBlocked).append('\n');
+        output.append("hordeClimbBodyStackChance: ").append(formatDouble(Config.hordeClimbBodyStackChance)).append('\n');
+        output.append("hordeClimbBodyStackApplySlowFallingTicks: ").append(Config.hordeClimbBodyStackApplySlowFallingTicks).append('\n');
         output.append("enableHordeClimbTargetElevationMode: ").append(Config.enableHordeClimbTargetElevationMode).append('\n');
         output.append("hordeClimbTargetMinYDifference: ").append(formatDouble(Config.hordeClimbTargetMinYDifference)).append('\n');
         output.append("hordeClimbTargetMinBlockYDifference: ").append(Config.hordeClimbTargetMinBlockYDifference).append('\n');
@@ -602,6 +632,9 @@ public final class ZlogicDebugCommand {
             output.append("has target: ").append(assessment.hasTarget()).append('\n');
             output.append("target allowed: ").append(assessment.targetAllowed()).append('\n');
             output.append("target kind: ").append(assessment.targetKind()).append('\n');
+            output.append("body stack supports: ").append(HordeBodyStackAssistHelper.countNearbySupportZombies(player.serverLevel(), zombie)).append('\n');
+            output.append("body stack blocked: ").append(HordeBodyStackAssistHelper.isBlockedOrPressingObstacle(player.serverLevel(), zombie, HordeClimbHelper.resolveTargetContext(player.serverLevel(), zombie))).append('\n');
+            output.append("body stack cooldown remaining: ").append(HordeBodyStackAssistHelper.getCooldownRemaining(zombie, player.serverLevel().getGameTime())).append('\n');
             output.append("last activation mode: ").append(HordeClimbHelper.getLastActivationMode(zombie)).append('\n');
             output.append("reason: ").append(assessment.reason()).append('\n');
             output.append("cooldown remaining: ").append(assessment.cooldownRemaining()).append('\n');
@@ -695,6 +728,114 @@ public final class ZlogicDebugCommand {
         output.append("Durability: ").append(inspection.durability()).append('\n');
         output.append("Current damage: ").append(inspection.currentDamage()).append('\n');
         output.append("Reason: ").append(inspection.reason()).append('\n');
+
+        send(source, output.toString());
+        return 1;
+    }
+
+    private static int executeBloodDebug(CommandSourceStack source) {
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(Component.literal("This command can only be used by a player."));
+            return 0;
+        }
+
+        ZombieTargetSearchResult targetSearch = findZombieTarget(player, 8.0D, Config.debugZombieCommandFallbackRadius);
+        StringBuilder output = new StringBuilder();
+        output.append("Zlogic Blood Sense Debug\n");
+        output.append("enableBloodSense: ").append(Config.enableBloodSense).append('\n');
+        output.append("bloodSenseRadius: ").append(formatDouble(Config.bloodSenseRadius)).append('\n');
+        output.append("bloodTraceLifetimeTicks: ").append(Config.bloodTraceLifetimeTicks).append('\n');
+        output.append("bloodTraceMaxEventsGlobal: ").append(Config.bloodTraceMaxEventsGlobal).append('\n');
+        output.append("bloodTraceMaxEventsPerChunk: ").append(Config.bloodTraceMaxEventsPerChunk).append('\n');
+        output.append("bloodTraceMinDamage: ").append(formatDouble(Config.bloodTraceMinDamage)).append('\n');
+        output.append("bloodTraceBaseIntensity: ").append(formatDouble(Config.bloodTraceBaseIntensity)).append('\n');
+        output.append("bloodTraceDamageIntensityMultiplier: ").append(formatDouble(Config.bloodTraceDamageIntensityMultiplier)).append('\n');
+        output.append("bloodTraceLowHealthBonus: ").append(Config.bloodTraceLowHealthBonus).append('\n');
+        output.append("bloodTraceLowHealthThreshold: ").append(formatDouble(Config.bloodTraceLowHealthThreshold)).append('\n');
+        output.append("bloodTraceLowHealthBonusIntensity: ").append(formatDouble(Config.bloodTraceLowHealthBonusIntensity)).append('\n');
+        output.append("bloodTraceRainDecayMultiplier: ").append(formatDouble(Config.bloodTraceRainDecayMultiplier)).append('\n');
+        output.append("bloodTraceWaterDecayMultiplier: ").append(formatDouble(Config.bloodTraceWaterDecayMultiplier)).append('\n');
+        output.append("bloodTraceAttractPlayers: ").append(Config.bloodTraceAttractPlayers).append('\n');
+        output.append("bloodTraceAttractMobs: ").append(Config.bloodTraceAttractMobs).append('\n');
+        output.append("bloodTraceOnlyAttractZombies: ").append(Config.bloodTraceOnlyAttractZombies).append('\n');
+        output.append("bloodTraceInvestigationSpeed: ").append(formatDouble(Config.bloodTraceInvestigationSpeed)).append('\n');
+        output.append("bloodTraceScanIntervalTicks: ").append(Config.bloodTraceScanIntervalTicks).append('\n');
+        output.append("bloodTraceMinScore: ").append(formatDouble(Config.bloodTraceMinScore)).append('\n');
+        output.append("enableLowHealthBloodTrail: ").append(Config.enableLowHealthBloodTrail).append('\n');
+        output.append("lowHealthBloodTrailIntervalTicks: ").append(Config.lowHealthBloodTrailIntervalTicks).append('\n');
+        output.append("lowHealthBloodTrailIntensity: ").append(formatDouble(Config.lowHealthBloodTrailIntensity)).append('\n');
+        output.append("bloodTraceDebug: ").append(Config.bloodTraceDebug).append('\n');
+        output.append("active traces in level: ").append(BloodTraceManager.getActiveTraceCount(player.serverLevel())).append('\n');
+        output.append("active traces global: ").append(BloodTraceManager.getActiveTraceCountGlobal()).append('\n');
+
+        BloodTrace lastTrace = BloodTraceManager.getLastTrace(player.serverLevel());
+        output.append("last trace pos: ").append(lastTrace == null ? "none" : lastTrace.pos()).append('\n');
+        output.append("last trace intensity: ").append(lastTrace == null ? "none" : formatDouble(lastTrace.intensity())).append('\n');
+        output.append("last trace fromPlayer: ").append(lastTrace != null && lastTrace.fromPlayer()).append('\n');
+
+        SenseTarget nearestTrace = BloodTraceManager.findBestTrace(player.serverLevel(), player.blockPosition(), Config.bloodSenseRadius);
+        output.append("nearest trace pos: ").append(nearestTrace == null ? "none" : nearestTrace.pos()).append('\n');
+        output.append("nearest trace score: ").append(nearestTrace == null ? "none" : formatDouble(nearestTrace.score())).append('\n');
+
+        if (targetSearch != null && targetSearch.entity() instanceof net.minecraft.world.entity.monster.Zombie zombie) {
+            output.append("zombie blood target pos: ").append(ZombieSenseManager.getStoredBloodTarget(zombie)).append('\n');
+            output.append("zombie blood target until: ").append(ZombieSenseManager.getBloodTargetUntilTick(zombie)).append('\n');
+        }
+
+        send(source, output.toString());
+        return 1;
+    }
+
+    private static int executeLightDebug(CommandSourceStack source) {
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(Component.literal("This command can only be used by a player."));
+            return 0;
+        }
+
+        ZombieTargetSearchResult targetSearch = findZombieTarget(player, 8.0D, Config.debugZombieCommandFallbackRadius);
+        StringBuilder output = new StringBuilder();
+        output.append("Zlogic Light Sense Debug\n");
+        output.append("enableLightSense: ").append(Config.enableLightSense).append('\n');
+        output.append("lightSenseRadius: ").append(formatDouble(Config.lightSenseRadius)).append('\n');
+        output.append("lightInterestLifetimeTicks: ").append(Config.lightInterestLifetimeTicks).append('\n');
+        output.append("lightInterestMaxEventsGlobal: ").append(Config.lightInterestMaxEventsGlobal).append('\n');
+        output.append("lightInterestMaxEventsPerChunk: ").append(Config.lightInterestMaxEventsPerChunk).append('\n');
+        output.append("lightSenseOnlyInDarkness: ").append(Config.lightSenseOnlyInDarkness).append('\n');
+        output.append("lightSenseMaxSkyLight: ").append(Config.lightSenseMaxSkyLight).append('\n');
+        output.append("lightSenseMinBlockLight: ").append(Config.lightSenseMinBlockLight).append('\n');
+        output.append("lightSenseReactToPlacedLights: ").append(Config.lightSenseReactToPlacedLights).append('\n');
+        output.append("lightSenseReactToRedstoneLights: ").append(Config.lightSenseReactToRedstoneLights).append('\n');
+        output.append("lightSenseReactToFlicker: ").append(Config.lightSenseReactToFlicker).append('\n');
+        output.append("lightSenseReactToMachineLight: ").append(Config.lightSenseReactToMachineLight).append('\n');
+        output.append("lightSenseReactToHeldLights: ").append(Config.lightSenseReactToHeldLights).append('\n');
+        output.append("lightPlacedIntensity: ").append(formatDouble(Config.lightPlacedIntensity)).append('\n');
+        output.append("lightFlickerIntensity: ").append(formatDouble(Config.lightFlickerIntensity)).append('\n');
+        output.append("lightRedstoneIntensity: ").append(formatDouble(Config.lightRedstoneIntensity)).append('\n');
+        output.append("lightMachineIntensity: ").append(formatDouble(Config.lightMachineIntensity)).append('\n');
+        output.append("lightHeldIntensity: ").append(formatDouble(Config.lightHeldIntensity)).append('\n');
+        output.append("lightSenseInvestigationSpeed: ").append(formatDouble(Config.lightSenseInvestigationSpeed)).append('\n');
+        output.append("lightSenseScanIntervalTicks: ").append(Config.lightSenseScanIntervalTicks).append('\n');
+        output.append("lightSenseMinScore: ").append(formatDouble(Config.lightSenseMinScore)).append('\n');
+        output.append("lightInterestSamePosCooldownTicks: ").append(Config.lightInterestSamePosCooldownTicks).append('\n');
+        output.append("lightSenseDebug: ").append(Config.lightSenseDebug).append('\n');
+        output.append("active interests in level: ").append(LightInterestManager.getActiveInterestCount(player.serverLevel())).append('\n');
+        output.append("active interests global: ").append(LightInterestManager.getActiveInterestCountGlobal()).append('\n');
+
+        LightInterest lastInterest = LightInterestManager.getLastInterest(player.serverLevel());
+        output.append("last light pos: ").append(lastInterest == null ? "none" : lastInterest.pos()).append('\n');
+        output.append("last light type: ").append(lastInterest == null ? "none" : lastInterest.type()).append('\n');
+        output.append("last light intensity: ").append(lastInterest == null ? "none" : formatDouble(lastInterest.intensity())).append('\n');
+        output.append("last light machineRelated: ").append(lastInterest != null && lastInterest.machineRelated()).append('\n');
+
+        SenseTarget nearestInterest = LightInterestManager.findBestInterest(player.serverLevel(), player.blockPosition(), Config.lightSenseRadius);
+        output.append("nearest light pos: ").append(nearestInterest == null ? "none" : nearestInterest.pos()).append('\n');
+        output.append("nearest light score: ").append(nearestInterest == null ? "none" : formatDouble(nearestInterest.score())).append('\n');
+        output.append("nearest light type: ").append(nearestInterest == null || nearestInterest.lightInterest() == null ? "none" : nearestInterest.lightInterest().type()).append('\n');
+
+        if (targetSearch != null && targetSearch.entity() instanceof net.minecraft.world.entity.monster.Zombie zombie) {
+            output.append("zombie light target pos: ").append(ZombieSenseManager.getStoredLightTarget(zombie)).append('\n');
+            output.append("zombie light target until: ").append(ZombieSenseManager.getLightTargetUntilTick(zombie)).append('\n');
+        }
 
         send(source, output.toString());
         return 1;

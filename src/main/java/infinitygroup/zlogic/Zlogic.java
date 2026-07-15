@@ -10,6 +10,7 @@ import infinitygroup.zlogic.horde.ZombieHordeClimbHandler;
 import infinitygroup.zlogic.barrier.ZombieBarrierBreakHandler;
 import infinitygroup.zlogic.noise.NoiseEventHandler;
 import infinitygroup.zlogic.noise.ZombieNoiseHandler;
+import infinitygroup.zlogic.senses.ZombieSenseManager;
 import infinitygroup.zlogic.compat.microtech.MicroTechCompat;
 import infinitygroup.zlogic.command.ZlogicDebugCommand;
 import infinitygroup.zlogic.machine.MachineAttackHandler;
@@ -49,11 +50,17 @@ public class Zlogic {
         NeoForge.EVENT_BUS.addListener(ZlogicSpawnControlHandler::onFinalizeSpawn);
         NeoForge.EVENT_BUS.addListener(MachineAttackHandler::onEntityTick);
         NeoForge.EVENT_BUS.addListener(ZombieNoiseHandler::onEntityTick);
+        NeoForge.EVENT_BUS.addListener(ZombieSenseManager::onLivingDamage);
+        NeoForge.EVENT_BUS.addListener(ZombieSenseManager::onBlockPlaced);
+        NeoForge.EVENT_BUS.addListener(ZombieSenseManager::onNeighborNotify);
+        NeoForge.EVENT_BUS.addListener(ZombieSenseManager::onEntityTick);
+        NeoForge.EVENT_BUS.addListener(ZombieSenseManager::onServerTick);
         NeoForge.EVENT_BUS.addListener(ZombieBaseDamageHandler::onEntityTick);
         NeoForge.EVENT_BUS.addListener(ZombieSurvivalScalingHandler::onEntityTick);
         NeoForge.EVENT_BUS.addListener(PerformanceTracker::onServerTick);
         NeoForge.EVENT_BUS.addListener(MachineAttackHandler::onLevelUnload);
         NeoForge.EVENT_BUS.addListener(ZombieBarrierBreakHandler::onLevelUnload);
+        NeoForge.EVENT_BUS.addListener(ZombieSenseManager::onLevelUnload);
         MicroTechCompat.registerIfAvailable(NeoForge.EVENT_BUS);
         NeoForge.EVENT_BUS.addListener(ZlogicDebugCommand::register);
     }

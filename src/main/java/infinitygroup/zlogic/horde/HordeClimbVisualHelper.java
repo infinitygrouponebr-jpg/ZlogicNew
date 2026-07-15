@@ -40,4 +40,20 @@ public final class HordeClimbVisualHelper {
             }
         }
     }
+
+    public static void playBodyStackAssistEffects(ServerLevel level, Zombie sourceZombie, int supportCount, HordeClimbHelper.HordeClimbAssessment assessment) {
+        if (level == null || sourceZombie == null) {
+            return;
+        }
+
+        if (Config.hordeClimbSounds) {
+            level.playSound(null, sourceZombie.blockPosition(), SoundEvents.ZOMBIE_STEP, SoundSource.HOSTILE, 0.45F, 0.95F + sourceZombie.getRandom().nextFloat() * 0.08F);
+        }
+
+        if (Config.hordeClimbParticles) {
+            Vec3 center = sourceZombie.position();
+            int particleCount = Math.max(2, Math.min(5, supportCount + 1));
+            level.sendParticles(ParticleTypes.POOF, center.x, center.y + 0.25D, center.z, particleCount, 0.18D, 0.08D, 0.18D, 0.005D);
+        }
+    }
 }

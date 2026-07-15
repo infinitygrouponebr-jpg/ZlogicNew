@@ -65,6 +65,18 @@ public final class ZombieHordeClimbHandler {
         HordeClimbHelper.recordEvaluation(zombie, assessment, gameTime);
 
         if (!assessment.active()) {
+            if (HordeBodyStackAssistHelper.tryBodyStackAssist(level, zombie, assessment, gameTime)) {
+                HordeClimbHelper.recordActivationMode(zombie, HordeClimbHelper.ActivationMode.BODY_STACK_ASSIST);
+                debug(
+                    "ZLOGIC_HORDE_BODY_STACK_TRIGGERED reason={} groupSize={} targetDistance={} cooldown={} modeFallback=inactive",
+                    assessment.reason(),
+                    assessment.groupSize(),
+                    formatDouble(assessment.horizontalDistance()),
+                    Config.hordeClimbBodyStackCooldownTicks
+                );
+                return;
+            }
+
             HordeClimbHelper.recordActivationMode(zombie, HordeClimbHelper.ActivationMode.NONE);
             debug(
                 "ZLOGIC_HORDE_CLIMB_SKIPPED mode={} reason={} groupSize={} siegeGroupSize={} targetDistance={} obstacleDistance={} obstacleHeight={} naturalSlope={} wallLikeObstacle={}",
@@ -82,6 +94,18 @@ public final class ZombieHordeClimbHandler {
         }
 
         if (zombie.getRandom().nextDouble() > Config.hordeClimbAttemptChance) {
+            if (HordeBodyStackAssistHelper.tryBodyStackAssist(level, zombie, assessment, gameTime)) {
+                HordeClimbHelper.recordActivationMode(zombie, HordeClimbHelper.ActivationMode.BODY_STACK_ASSIST);
+                debug(
+                    "ZLOGIC_HORDE_BODY_STACK_TRIGGERED reason={} groupSize={} targetDistance={} cooldown={} modeFallback=chance",
+                    assessment.reason(),
+                    assessment.groupSize(),
+                    formatDouble(assessment.horizontalDistance()),
+                    Config.hordeClimbBodyStackCooldownTicks
+                );
+                return;
+            }
+
             HordeClimbHelper.recordActivationMode(zombie, HordeClimbHelper.ActivationMode.NONE);
             return;
         }
